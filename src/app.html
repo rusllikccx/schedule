@@ -5,7 +5,14 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
 		<title>Розклад занять</title>
-		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+		<link rel="preconnect" href="https://api.campus.kpi.ua" crossorigin>
+		<link rel="dns-prefetch" href="https://api.campus.kpi.ua">
+		<script>
+			// Early fetch triggered while HTML is parsing, running in parallel with JS bundles
+			window.__SCHEDULE_PROMISE__ = fetch('https://api.campus.kpi.ua/schedule/lessons?groupId=5598')
+				.then(function(res) { return res.ok ? res.json() : null; })
+				.catch(function() { return null; });
+		</script>
 		<link rel="icon" href="/images/favicon.ico" sizes="all">
 		%sveltekit.head%
 	</head>

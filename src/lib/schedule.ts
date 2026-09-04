@@ -153,21 +153,78 @@ export function transformWeekData(apiDays?: ApiDay[] | null): WeekMap {
     return weekMap;
 }
 
+const SCHEDULE_CACHE_KEY = 'kpi_schedule_cache_v1';
+
+/**
+ * Retrieves cached schedule data from localStorage if present.
+ */
+export function getCachedSchedule(): ScheduleData | null {
+    if (typeof window === 'undefined') return null;
+    try {
+        const item = localStorage.getItem(SCHEDULE_CACHE_KEY);
+        if (!item) return null;
+        return JSON.parse(item) as ScheduleData;
+    } catch (e) {
+        console.warn('Failed to read schedule from localStorage cache', e);
+        return null;
+    }
+}
+
+/**
+ * Saves schedule data to localStorage.
+ */
+export function setCachedSchedule(data: ScheduleData): void {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem(SCHEDULE_CACHE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.warn('Failed to save schedule to localStorage cache', e);
+    }
+}
+
 /**
  * Fetches and transforms schedule data for both weeks.
+ * Supports consuming the early fetch promise initiated in HTML head,
+ * and caches results in localStorage for stale-while-revalidate behavior.
  */
 export async function fetchSchedule(
     url = API_URL,
     fetchFn: typeof fetch = fetch
 ): Promise<ScheduleData> {
-    const response = await fetchFn(url);
-    if (!response.ok) {
-        throw new Error(`HTTP помилка: ${response.status}`);
-    }
-    const data: ApiScheduleResponse = await response.json();
+    let rawData: ApiScheduleResponse | null = null;
 
-    return {
-        week1: transformWeekData(data.scheduleFirstWeek),
-        week2: transformWeekData(data.scheduleSecondWeek)
+    // Check if early fetch was started in HTML head
+    if (typeof window !== 'undefined' && window.__SCHEDULE_PROMISE__) {
+        try {
+            rawData = await window.__SCHEDULE_PROMISE__;
+        } catch {
+            rawData = null;
+        } finally {
+            window.__SCHEDULE_PROMISE__ = undefined;
+        }
+    }
+
+    // Fallback if early fetch wasn't present or failed
+    if (!rawData) {
+        const response = await fetchFn(url);
+        if (!response.ok) {
+            throw new Error(`HTTP помилка: ${response.status}`);
+        }
+        rawData = await response.json();
+    }
+
+    if (!rawData || !rawData.scheduleFirstWeek) {
+        throw new Error('Отримано порожню або некоректну відповідь від API');
+    }
+
+    const transformed: ScheduleData = {
+        week1: transformWeekData(rawData.scheduleFirstWeek),
+        week2: transformWeekData(rawData.scheduleSecondWeek)
     };
+
+    // Save to client cache
+    setCachedSchedule(transformed);
+
+    return transformed;
 }
+

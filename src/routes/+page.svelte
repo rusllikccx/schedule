@@ -6,6 +6,7 @@
         getActualCurrentWeek,
         createEmptyWeekMap,
         fetchSchedule,
+        getCachedSchedule,
         type ScheduleData
     } from '$lib/schedule';
     import {
@@ -253,13 +254,26 @@
     }
 
     async function loadScheduleData() {
-        loading = true;
+        // Step 1: Stale-While-Revalidate - Immediate instant load from cache
+        const cached = getCachedSchedule();
+        if (cached) {
+            scheduleData = cached;
+            loading = false;
+        } else {
+            loading = true;
+        }
         error = null;
+
+        // Step 2: Fetch fresh data (consumes early fetch promise from HTML head or executes network fetch)
         try {
-            scheduleData = await fetchSchedule();
+            const fresh = await fetchSchedule();
+            scheduleData = fresh;
         } catch (err: unknown) {
             console.error('Failed to load schedule:', err);
-            error = 'Не вдалося завантажити розклад з API';
+            // If we didn't have cached data, show error message
+            if (!cached) {
+                error = 'Не вдалося завантажити розклад з API';
+            }
         } finally {
             loading = false;
         }
