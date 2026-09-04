@@ -63,6 +63,178 @@
         return filtered;
     });
 
+    // Compute live status, active pair, break, and progress slider for today
+    let todayLiveStatus = $derived.by(() => {
+        const todayMeta = DAYS.find(d => d.num === currentDay);
+        if (!todayMeta) {
+            return {
+                mode: 'no-pairs' as const,
+                title: 'Сьогодні вихідний',
+                subtitle: '',
+                passedPairs: 0,
+                remainingPairs: 0,
+                totalPairs: 0,
+                percent: 0,
+                color: 'gray' as const
+            };
+        }
+
+        // Today's actual week map
+        const todayWeekMap = actualWeek === 1 ? scheduleData.week1 : scheduleData.week2;
+        const rawTodaySlots = todayWeekMap[todayMeta.code] || {};
+
+        // Find pairs present today before vs after hidden filtering
+        let totalActiveToday = 0;
+        let slotsWithLessons: number[] = [];
+        let slotLessonsFiltered: Record<number, typeof rawTodaySlots[number]> = {};
+        let slotLessonsRaw: Record<number, typeof rawTodaySlots[number]> = {};
+
+        for (const s of TIME_SLOTS) {
+            const raw = rawTodaySlots[s.slot] || [];
+            const filtered = hiddenSubjects.length > 0
+                ? raw.filter(l => !hiddenSubjects.includes(l.title))
+                : raw;
+            slotLessonsRaw[s.slot] = raw;
+            slotLessonsFiltered[s.slot] = filtered;
+
+            if (filtered.length > 0) {
+                totalActiveToday++;
+                slotsWithLessons.push(s.slot);
+            }
+        }
+
+        // Check if currently inside a pair slot
+        const currentSlotIndex = TIME_SLOTS.findIndex(
+            s => currentMinutes >= s.startMin && currentMinutes <= s.endMin
+        );
+
+        if (currentSlotIndex !== -1) {
+            const slot = TIME_SLOTS[currentSlotIndex];
+            const filteredPairs = slotLessonsFiltered[slot.slot] || [];
+            const rawPairs = slotLessonsRaw[slot.slot] || [];
+
+            // How many active pairs have passed strictly before this slot
+            const passed = slotsWithLessons.filter(sn => sn < slot.slot).length;
+            const remaining = slotsWithLessons.filter(sn => sn > slot.slot).length;
+
+            if (filteredPairs.length > 0) {
+                // Active pair running right now!
+                const pairNames = filteredPairs.map(p => p.title).join(' / ');
+                const progressInSlot = Math.min(
+                    100,
+                    Math.max(0, ((currentMinutes - slot.startMin) / (slot.endMin - slot.startMin)) * 100)
+                );
+                const minutesLeft = slot.endMin - currentMinutes;
+
+                return {
+                    mode: 'active-pair' as const,
+                    title: pairNames,
+                    subtitle: `${slot.start} – ${slot.end} (залишилось ${minutesLeft} хв)`,
+                    passedPairs: passed,
+                    remainingPairs: remaining,
+                    totalPairs: totalActiveToday,
+                    percent: Math.round(progressInSlot),
+                    color: 'green' as const
+                };
+            } else if (rawPairs.length > 0) {
+                // User removed this pair
+                const removedName = rawPairs.map(p => p.title).join(' / ');
+                return {
+                    mode: 'removed-pair' as const,
+                    title: `${removedName} (приховано)`,
+                    subtitle: `${slot.start} – ${slot.end}`,
+                    passedPairs: passed,
+                    remainingPairs: remaining,
+                    totalPairs: totalActiveToday,
+                    percent: 0,
+                    color: 'gray' as const
+                };
+            } else {
+                // Window/free slot
+                return {
+                    mode: 'no-pairs' as const,
+                    title: 'Вільна пара (вікно)',
+                    subtitle: `${slot.start} – ${slot.end}`,
+                    passedPairs: passed,
+                    remainingPairs: remaining,
+                    totalPairs: totalActiveToday,
+                    percent: 0,
+                    color: 'gray' as const
+                };
+            }
+        }
+
+        // Check if currently inside a break between slots
+        const firstSlot = TIME_SLOTS[0];
+        const lastSlot = TIME_SLOTS[TIME_SLOTS.length - 1];
+
+        if (currentMinutes > firstSlot.startMin && currentMinutes < lastSlot.endMin) {
+            // Find the slot that just ended and the upcoming slot
+            for (let i = 0; i < TIME_SLOTS.length - 1; i++) {
+                const prev = TIME_SLOTS[i];
+                const next = TIME_SLOTS[i + 1];
+                if (currentMinutes > prev.endMin && currentMinutes < next.startMin) {
+                    const nextFiltered = slotLessonsFiltered[next.slot] || [];
+                    const nextRaw = slotLessonsRaw[next.slot] || [];
+                    const nextName = nextFiltered.length > 0
+                        ? nextFiltered.map(p => p.title).join(' / ')
+                        : (nextRaw.length > 0 ? `${nextRaw.map(p => p.title).join(' / ')} (приховано)` : 'Вільна пара');
+
+                    const passed = slotsWithLessons.filter(sn => sn <= prev.slot).length;
+                    const remaining = slotsWithLessons.filter(sn => sn >= next.slot).length;
+                    const breakDuration = next.startMin - prev.endMin;
+                    const breakElapsed = currentMinutes - prev.endMin;
+                    const breakLeft = next.startMin - currentMinutes;
+                    const percent = Math.min(100, Math.max(0, Math.round((breakElapsed / breakDuration) * 100)));
+
+                    return {
+                        mode: 'break' as const,
+                        title: `Перерва перед: ${nextName}`,
+                        subtitle: `Початок о ${next.start} (через ${breakLeft} хв)`,
+                        passedPairs: passed,
+                        remainingPairs: remaining,
+                        totalPairs: totalActiveToday,
+                        percent,
+                        color: 'yellow' as const
+                    };
+                }
+            }
+        }
+
+        // Before classes start
+        if (currentMinutes < firstSlot.startMin && totalActiveToday > 0) {
+            const firstActiveSlotNum = slotsWithLessons[0];
+            const firstActiveSlot = TIME_SLOTS.find(s => s.slot === firstActiveSlotNum) || firstSlot;
+            const firstName = (slotLessonsFiltered[firstActiveSlot.slot] || []).map(p => p.title).join(' / ');
+            const minsToStart = firstActiveSlot.startMin - currentMinutes;
+
+            return {
+                mode: 'break' as const,
+                title: `До початку занять: ${firstName || 'Пара'}`,
+                subtitle: `Початок о ${firstActiveSlot.start} (через ${minsToStart} хв)`,
+                passedPairs: 0,
+                remainingPairs: totalActiveToday,
+                totalPairs: totalActiveToday,
+                percent: 0,
+                color: 'yellow' as const
+            };
+        }
+
+        // After all classes ended or no classes today
+        const hasPassedAll = currentMinutes > lastSlot.endMin || (slotsWithLessons.length > 0 && currentMinutes > (TIME_SLOTS.find(s => s.slot === slotsWithLessons[slotsWithLessons.length - 1])?.endMin ?? 0));
+
+        return {
+            mode: 'no-pairs' as const,
+            title: totalActiveToday === 0 ? 'Сьогодні немає пар' : (hasPassedAll ? 'Всі пари на сьогодні завершено' : 'Немає пар'),
+            subtitle: '',
+            passedPairs: totalActiveToday,
+            remainingPairs: 0,
+            totalPairs: totalActiveToday,
+            percent: 0,
+            color: 'gray' as const
+        };
+    });
+
     function toggleRemoveControls() {
         showRemoveControls = !showRemoveControls;
         saveShowHideControls(showRemoveControls);
@@ -106,7 +278,7 @@
 
         const timer = setInterval(() => {
             currentTime = new Date();
-        }, 60000);
+        }, 10000);
 
         return () => {
             clearInterval(timer);
@@ -116,7 +288,39 @@
 
 <div class="container-fluid px-2 px-md-4">
     <header class="d-flex flex-column align-items-center mb-3">
-        <h1 class="main-title fw-bold mb-3 text-center">Розклад занять</h1>
+        <h1 class="main-title fw-bold mb-2 text-center">Розклад занять</h1>
+
+        <!-- Live Status Card & Pair Slider -->
+        <div class="live-status-card w-100 mb-3 shadow-sm status-{todayLiveStatus.color}">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-1 mb-2">
+                <div class="d-flex flex-column">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="status-indicator"></span>
+                        <span class="status-title fw-bold">{todayLiveStatus.title}</span>
+                    </div>
+                    {#if todayLiveStatus.subtitle}
+                        <span class="status-time text-muted small">{todayLiveStatus.subtitle}</span>
+                    {/if}
+                </div>
+                <div class="status-stats text-sm-end text-muted small">
+                    <span class="badge-count passed-count">Пройшло: <strong>{todayLiveStatus.passedPairs}</strong></span>
+                    <span class="mx-1">•</span>
+                    <span class="badge-count remaining-count">Залишилось: <strong>{todayLiveStatus.remainingPairs}</strong></span>
+                    {#if todayLiveStatus.totalPairs > 0}
+                        <span class="mx-1">•</span>
+                        <span class="badge-count total-count">Всього: {todayLiveStatus.totalPairs}</span>
+                    {/if}
+                </div>
+            </div>
+
+            <!-- Progress Slider -->
+            <div class="live-progress-track" role="progressbar" aria-valuenow={todayLiveStatus.percent} aria-valuemin="0" aria-valuemax="100">
+                <div
+                    class="live-progress-bar progress-{todayLiveStatus.color}"
+                    style="width: {todayLiveStatus.percent}%;"
+                ></div>
+            </div>
+        </div>
 
         <div class="header-toolbar w-100 mb-2">
             <div class="header-left-actions d-flex align-items-center gap-2">
