@@ -1,0 +1,6 @@
+User-agent: *
+
+Allow: /
+
+Sitemap: https://fb53.ext.io/sitemap.xml
+
