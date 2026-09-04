@@ -177,6 +177,28 @@ a.lesson-card:hover .lesson-title {
     border-top: 1px dashed rgba(0, 0, 0, 0.08);
 }
 
+.hide-subject-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 0.85rem;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    z-index: 10;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.hide-subject-btn:hover {
+    background-color: rgba(220, 53, 69, 0.12);
+    transform: scale(1.15);
+}
+
 .current-lesson-active {
     border: 1px solid #97cbbc !important;
     box-shadow: 0 0 16px var(--current-lesson-glow), inset 0 0 4px rgba(16, 185, 129, 0.2) !important;

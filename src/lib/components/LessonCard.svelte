@@ -4,15 +4,33 @@
     interface Props {
         lesson: Lesson;
         isActive?: boolean;
+        onHide?: (title: string) => void;
     }
 
-    let { lesson, isActive = false }: Props = $props();
+    let { lesson, isActive = false, onHide }: Props = $props();
 
     let typeInfo = $derived(LESSON_TYPES[lesson.type] || LESSON_TYPES[LessonType.Other]);
+
+    function handleHide(e: MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        onHide?.(lesson.title);
+    }
 </script>
 
 {#snippet cardContent()}
-    <div>
+    <div style="position: relative;">
+        {#if onHide}
+            <button
+                type="button"
+                class="hide-subject-btn"
+                onclick={handleHide}
+                title="Приховати дисципліну"
+                aria-label="Приховати дисципліну"
+            >
+                ✕
+            </button>
+        {/if}
         <span class="badge-type">{typeInfo.name}</span>
         <div class="lesson-title">{lesson.title}</div>
     </div>

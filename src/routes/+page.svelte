@@ -8,6 +8,11 @@
         fetchSchedule,
         type ScheduleData
     } from '$lib/schedule';
+    import {
+        loadHiddenSubjects,
+        saveHiddenSubjects,
+        clearHiddenSubjects
+    } from '$lib/cookies';
     import LessonsCell from '$lib/components/LessonsCell.svelte';
 
     let displayedWeek = $state(1);
@@ -15,6 +20,7 @@
     let loading = $state(true);
     let error = $state<string | null>(null);
     let currentTime = $state(new Date());
+    let hiddenSubjects = $state<string[]>([]);
 
     let scheduleData = $state<ScheduleData>({
         week1: createEmptyWeekMap(),
@@ -36,7 +42,35 @@
         return null;
     });
 
-    let currentWeekData = $derived(displayedWeek === 1 ? scheduleData.week1 : scheduleData.week2);
+    let rawWeekData = $derived(displayedWeek === 1 ? scheduleData.week1 : scheduleData.week2);
+
+    // Filter out hidden subjects from the current week's displayed lessons
+    let currentWeekData = $derived.by(() => {
+        const filtered: typeof rawWeekData = {};
+        for (const dayCode of Object.keys(rawWeekData)) {
+            filtered[dayCode] = {};
+            for (const slotStr of Object.keys(rawWeekData[dayCode])) {
+                const slotNum = Number(slotStr);
+                const lessons = rawWeekData[dayCode][slotNum] || [];
+                filtered[dayCode][slotNum] = hiddenSubjects.length > 0
+                    ? lessons.filter(lesson => !hiddenSubjects.includes(lesson.title))
+                    : lessons;
+            }
+        }
+        return filtered;
+    });
+
+    function hideSubject(subjectTitle: string) {
+        if (!hiddenSubjects.includes(subjectTitle)) {
+            hiddenSubjects = [...hiddenSubjects, subjectTitle];
+            saveHiddenSubjects(hiddenSubjects);
+        }
+    }
+
+    function resetHiddenSubjects() {
+        hiddenSubjects = [];
+        clearHiddenSubjects();
+    }
 
     async function loadScheduleData() {
         loading = true;
@@ -49,16 +83,15 @@
         } finally {
             loading = false;
         }
-    } 
-    
+    }
 
     onMount(() => {
         const now = new Date();
         currentTime = now;
         displayedWeek = getActualCurrentWeek(now);
         selectedMobileDay = now.getDay() || 1;
+        hiddenSubjects = loadHiddenSubjects();
 
-        fetchSchedule();
         loadScheduleData();
 
         const timer = setInterval(() => {
@@ -93,6 +126,17 @@
                 Парний
             </button>
         </div>
+
+        {#if hiddenSubjects.length > 0}
+            <button
+                type="button"
+                id="reset-hidden-btn"
+                class="btn btn-outline-danger btn-sm mb-2"
+                onclick={resetHiddenSubjects}
+            >
+                Повернути приховані ({hiddenSubjects.length})
+            </button>
+        {/if}
 
         <div
             class="btn-group w-100 shadow-sm d-md-none overflow-auto mt-1"
@@ -161,6 +205,7 @@
                                         {lessons}
                                         isSlotActive={isCurrentWeek && currentDay === day.num && activeSlot === slot.slot}
                                         cellId="toggle-w{displayedWeek}-{day.num}-{slot.slot}"
+                                        onHideSubject={hideSubject}
                                     />
                                 </td>
                             {/each}

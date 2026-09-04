@@ -6,9 +6,10 @@
         lessons: Lesson[];
         isSlotActive?: boolean;
         cellId: string;
+        onHideSubject?: (title: string) => void;
     }
 
-    let { lessons, isSlotActive = false, cellId }: Props = $props();
+    let { lessons, isSlotActive = false, cellId, onHideSubject }: Props = $props();
 
     let visibleLessons = $derived(lessons.slice(0, 3));
     let hiddenLessons = $derived(lessons.slice(3));
@@ -16,12 +17,12 @@
 
 {#if lessons.length > 0}
     {#if lessons.length <= 3}
-        {#each lessons as lesson}
-            <LessonCard {lesson} isActive={isSlotActive} />
+        {#each lessons as lesson (lesson.title + lesson.lecturer + lesson.type)}
+            <LessonCard {lesson} isActive={isSlotActive} onHide={onHideSubject} />
         {/each}
     {:else}
-        {#each visibleLessons as lesson}
-            <LessonCard {lesson} isActive={isSlotActive} />
+        {#each visibleLessons as lesson (lesson.title + lesson.lecturer + lesson.type)}
+            <LessonCard {lesson} isActive={isSlotActive} onHide={onHideSubject} />
         {/each}
 
         <input type="checkbox" id={cellId} class="lessons-toggle" />
@@ -29,8 +30,8 @@
         
         <div class="lessons-expandable-content">
             <div class="lessons-expandable-inner d-flex flex-column gap-2 pt-2">
-                {#each hiddenLessons as lesson}
-                    <LessonCard {lesson} isActive={isSlotActive} />
+                {#each hiddenLessons as lesson (lesson.title + lesson.lecturer + lesson.type)}
+                    <LessonCard {lesson} isActive={isSlotActive} onHide={onHideSubject} />
                 {/each}
             </div>
         </div>
