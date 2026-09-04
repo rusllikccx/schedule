@@ -23,6 +23,14 @@ body {
     background-color: #ffffff;
 }
 
+#week-selector .btn:hover,
+#week-selector .btn.active,
+#mobile-day-buttons .btn.btn-primary {
+    background-color: #0d6efd;
+    color: #ffffff;
+}
+
+
 #week-selector .btn.active,
 #mobile-day-buttons .btn.btn-primary {
     background-color: #0d6efd;
