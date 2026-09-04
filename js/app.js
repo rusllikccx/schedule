@@ -1,4 +1,20 @@
-import { TIME_SLOTS, LESSON_TYPES, DAYS, SCHEDULE_DATA } from './data.js';
+const API_URL = 'https://api.campus.kpi.ua/schedule/lessons?groupId=5598';
+import { TIME_SLOTS, LESSON_TYPES, DAYS, ONLINE_LINKS } from './data.js';
+
+
+
+function findOnlineLink(title, lecturerName) {
+    const t = (title || '').toLowerCase();
+    const l = (lecturerName || '').toLowerCase();
+
+    const match = ONLINE_LINKS.find(entry => {
+        const titleMatches = t.includes(entry.title.toLowerCase());
+        const lecturerMatches = !entry.lecturer || l.includes(entry.lecturer.toLowerCase());
+        return titleMatches && lecturerMatches;
+    });
+
+    return match ? match.link : '';
+}
 
 const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
 const escapeHtml = (text) => text ? String(text).replace(/[&<>"']/g, m => ESCAPE_MAP[m]) : '';
@@ -14,6 +30,7 @@ function getActualCurrentWeek() {
 
 let displayedWeek = getActualCurrentWeek();
 let selectedMobileDay = new Date().getDay() || 1;
+let scheduleData = { week1: {}, week2: {} };
 
 const dom = {
     scheduleBody: document.getElementById('schedule-body'),
@@ -22,25 +39,109 @@ const dom = {
     dayHeaders: document.querySelectorAll('thead th[data-day]')
 };
 
+function getSlotByTime(timeString) {
+    const [h, m] = timeString.split(':').map(Number);
+    const timeFormatted = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const found = TIME_SLOTS.find(s => s.start === timeFormatted);
+    return found ? found.slot : 1;
+}
+
+function parseType(typeTag, typeName) {
+    if (typeTag === 'lec' || typeName === 'Лек') return 1;
+    if (typeTag === 'prac' || typeName === 'Прак') return 2;
+    if (typeTag === 'lab' || typeName === 'Лаб') return 3;
+    return 4;
+}
+
+function transformWeekData(apiDays) {
+    const weekMap = {};
+    DAYS.forEach(d => { weekMap[d.code] = {}; });
+
+    if (!Array.isArray(apiDays)) return weekMap;
+
+    apiDays.forEach(dayObj => {
+        const dayMeta = DAYS.find(d => d.key === dayObj.day);
+        if (!dayMeta) return;
+
+        (dayObj.pairs || []).forEach(pair => {
+            const slotNum = getSlotByTime(pair.time);
+            if (!weekMap[dayMeta.code][slotNum]) {
+                weekMap[dayMeta.code][slotNum] = [];
+            }
+
+            const lecturerName = pair.lecturer ? pair.lecturer.name : '';
+            const onlineLink = findOnlineLink(pair.name, lecturerName);
+
+            weekMap[dayMeta.code][slotNum].push({
+                type: parseType(pair.tag, pair.type),
+                title: pair.name,
+                lecturer: lecturerName,
+                location: pair.location || null,
+                link: onlineLink
+            });
+        });
+    });
+
+    return weekMap;
+}
+
+async function fetchSchedule() {
+    dom.scheduleBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Завантаження розкладу...</td></tr>`;
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error(`HTTP помилка: ${response.status}`);
+        const data = await response.json();
+
+        scheduleData.week1 = transformWeekData(data.scheduleFirstWeek);
+        scheduleData.week2 = transformWeekData(data.scheduleSecondWeek);
+
+        renderScheduleTable();
+    } catch (err) {
+        dom.scheduleBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Не вдалося завантажити розклад з API</td></tr>`;
+        console.error(err);
+    }
+}
+
 function createCardHtml(lesson) {
     const typeInfo = LESSON_TYPES[lesson.type] || LESSON_TYPES[4];
-    const extraHtml = lesson.extra ? `<div class="lesson-footer">${escapeHtml(lesson.extra)}</div>` : '';
+
+    // Аудитория снизу
+    let locationHtml = '';
+    if (lesson.location) {
+        if (lesson.location.uri) {
+            locationHtml = `
+                <div class="mt-1">
+                    📍 
+                    <a href="${encodeURI(lesson.location.uri)}" target="_blank" rel="noopener noreferrer" class="location-link" onclick="event.stopPropagation();">
+                        ауд. ${escapeHtml(lesson.location.title)}
+                    </a>
+                </div>`;
+        } else {
+            locationHtml = `<div class="location-text mt-1 text-muted">📍 ауд. ${escapeHtml(lesson.location.title)}</div>`;
+        }
+    }
+
     const innerContent = `
         <div>
             <span class="badge-type">${typeInfo.name}</span>
             <div class="lesson-title">${escapeHtml(lesson.title)}</div>
         </div>
-        ${extraHtml}
+        <div class="lesson-footer">
+            ${lesson.lecturer ? `<div>${escapeHtml(lesson.lecturer)}</div>` : ''}
+            ${locationHtml}
+        </div>
     `;
 
+    // Если есть ссылка на онлайн-пару — карточка кликабельна
     if (lesson.link) {
         return `<a href="${encodeURI(lesson.link)}" target="_blank" rel="noopener noreferrer" class="lesson-card ${typeInfo.cssClass}">${innerContent}</a>`;
     }
+
     return `<div class="lesson-card ${typeInfo.cssClass}">${innerContent}</div>`;
 }
 
 function renderScheduleTable() {
-    const weekData = SCHEDULE_DATA[`week${displayedWeek}`] || {};
+    const weekData = scheduleData[`week${displayedWeek}`] || {};
     let rowsHtml = '';
 
     for (let i = 0; i < TIME_SLOTS.length; i++) {
@@ -49,7 +150,7 @@ function renderScheduleTable() {
 
         for (let j = 0; j < DAYS.length; j++) {
             const day = DAYS[j];
-            const lessons = weekData[day.key]?.[slot.slot] || [];
+            const lessons = weekData[day.code]?.[slot.slot] || [];
             let cellContent = '';
 
             if (lessons.length > 0) {
@@ -155,10 +256,9 @@ dom.mobileDaySelector.addEventListener('click', (e) => {
     }
 });
 
-// Ініціалізація
 dom.weekSelector.querySelectorAll('button').forEach(btn => {
     btn.classList.toggle('active', Number(btn.dataset.week) === displayedWeek);
 });
 
-renderScheduleTable();
+fetchSchedule();
 setInterval(updateLiveStatus, 60000);
