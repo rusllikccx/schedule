@@ -11,7 +11,9 @@
     import {
         loadHiddenSubjects,
         saveHiddenSubjects,
-        clearHiddenSubjects
+        clearHiddenSubjects,
+        loadShowHideControls,
+        saveShowHideControls
     } from '$lib/cookies';
     import LessonsCell from '$lib/components/LessonsCell.svelte';
 
@@ -21,6 +23,7 @@
     let error = $state<string | null>(null);
     let currentTime = $state(new Date());
     let hiddenSubjects = $state<string[]>([]);
+    let showRemoveControls = $state(false);
 
     let scheduleData = $state<ScheduleData>({
         week1: createEmptyWeekMap(),
@@ -60,6 +63,11 @@
         return filtered;
     });
 
+    function toggleRemoveControls() {
+        showRemoveControls = !showRemoveControls;
+        saveShowHideControls(showRemoveControls);
+    }
+
     function hideSubject(subjectTitle: string) {
         if (!hiddenSubjects.includes(subjectTitle)) {
             hiddenSubjects = [...hiddenSubjects, subjectTitle];
@@ -91,6 +99,7 @@
         displayedWeek = getActualCurrentWeek(now);
         selectedMobileDay = now.getDay() || 1;
         hiddenSubjects = loadHiddenSubjects();
+        showRemoveControls = loadShowHideControls();
 
         loadScheduleData();
 
@@ -108,26 +117,53 @@
     <header class="d-flex flex-column align-items-center mb-3">
         <h1 class="main-title fw-bold mb-3 text-center">Розклад занять</h1>
 
-        <div class="btn-group shadow-sm mb-2" role="group" id="week-selector">
+        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mb-2">
             <button
                 type="button"
-                class="btn btn-outline-primary px-3 px-md-4 py-2 fw-semibold"
-                class:active={displayedWeek === 1}
-                onclick={() => (displayedWeek = 1)}
+                id="toggle-remove-btn"
+                class="btn btn-sm px-3 py-2 fw-semibold shadow-sm"
+                class:btn-outline-secondary={!showRemoveControls}
+                class:btn-danger={showRemoveControls}
+                onclick={toggleRemoveControls}
+                title={showRemoveControls ? 'Приховати хрестики видалення' : 'Показати хрестики для приховування занять'}
             >
-                Непарний
+                {showRemoveControls ? '✕ Вимкнути видалення' : '✎ Редагувати розклад'}
             </button>
+
+            <div class="btn-group shadow-sm" role="group" id="week-selector">
+                <button
+                    type="button"
+                    class="btn btn-outline-primary px-3 px-md-4 py-2 fw-semibold"
+                    class:active={displayedWeek === 1}
+                    onclick={() => (displayedWeek = 1)}
+                >
+                    Непарний
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-outline-primary px-3 px-md-4 py-2 fw-semibold"
+                    class:active={displayedWeek === 2}
+                    onclick={() => (displayedWeek = 2)}
+                >
+                    Парний
+                </button>
+            </div>
+
             <button
                 type="button"
-                class="btn btn-outline-primary px-3 px-md-4 py-2 fw-semibold"
-                class:active={displayedWeek === 2}
-                onclick={() => (displayedWeek = 2)}
+                id="toggle-remove-btn"
+                class="btn btn-sm px-3 py-2 fw-semibold shadow-sm"
+                class:btn-outline-secondary={!showRemoveControls}
+                class:btn-danger={showRemoveControls}
+                onclick={toggleRemoveControls}
+                title={showRemoveControls ? 'Приховати хрестики видалення' : 'Показати хрестики для приховування занять'}
             >
-                Парний
+                {showRemoveControls ? '✕ Вимкнути видалення' : '✎ Редагувати розклад'}
             </button>
         </div>
 
         {#if hiddenSubjects.length > 0}
+        {#if showRemoveControls && hiddenSubjects.length > 0}
             <button
                 type="button"
                 id="reset-hidden-btn"
@@ -205,6 +241,7 @@
                                         {lessons}
                                         isSlotActive={isCurrentWeek && currentDay === day.num && activeSlot === slot.slot}
                                         cellId="toggle-w{displayedWeek}-{day.num}-{slot.slot}"
+                                        {showRemoveControls}
                                         onHideSubject={hideSubject}
                                     />
                                 </td>
