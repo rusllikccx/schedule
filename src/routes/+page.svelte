@@ -97,7 +97,8 @@
         const now = new Date();
         currentTime = now;
         displayedWeek = getActualCurrentWeek(now);
-        selectedMobileDay = now.getDay() || 1;
+        const dayOfWeek = now.getDay();
+        selectedMobileDay = dayOfWeek === 0 ? 1 : dayOfWeek;
         hiddenSubjects = loadHiddenSubjects();
         showRemoveControls = loadShowHideControls();
 
@@ -148,21 +149,8 @@
                     Парний
                 </button>
             </div>
-
-            <button
-                type="button"
-                id="toggle-remove-btn"
-                class="btn btn-sm px-3 py-2 fw-semibold shadow-sm"
-                class:btn-outline-secondary={!showRemoveControls}
-                class:btn-danger={showRemoveControls}
-                onclick={toggleRemoveControls}
-                title={showRemoveControls ? 'Приховати хрестики видалення' : 'Показати хрестики для приховування занять'}
-            >
-                {showRemoveControls ? '✕ Вимкнути видалення' : '✎ Редагувати розклад'}
-            </button>
         </div>
 
-        {#if hiddenSubjects.length > 0}
         {#if showRemoveControls && hiddenSubjects.length > 0}
             <button
                 type="button"
