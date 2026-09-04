@@ -31,6 +31,7 @@ function getActualCurrentWeek() {
 let displayedWeek = getActualCurrentWeek();
 let selectedMobileDay = new Date().getDay() || 1;
 let scheduleData = { week1: {}, week2: {} };
+let hiddenSubjects = JSON.parse(localStorage.getItem('hiddenSubjects')) || [];
 
 const dom = {
     scheduleBody: document.getElementById('schedule-body'),
@@ -105,14 +106,13 @@ async function fetchSchedule() {
 function createCardHtml(lesson) {
     const typeInfo = LESSON_TYPES[lesson.type] || LESSON_TYPES[4];
 
-    // Аудитория снизу
     let locationHtml = '';
     if (lesson.location) {
         if (lesson.location.uri) {
             locationHtml = `
                 <div class="mt-1">
                     📍 
-                    <a href="${encodeURI(lesson.location.uri)}" target="_blank" rel="noopener noreferrer" class="location-link" onclick="event.stopPropagation();">
+                    <a href="${encodeURI(lesson.location.uri)}" target="_blank" rel="noopener noreferrer" class="location-link">
                         ауд. ${escapeHtml(lesson.location.title)}
                     </a>
                 </div>`;
@@ -121,20 +121,22 @@ function createCardHtml(lesson) {
         }
     }
 
+    const hideBtnHtml = `<button class="hide-subject-btn" data-title="${escapeHtml(lesson.title)}" style="position: absolute; top: 5px; right: 5px; background: transparent; border: none; cursor: pointer; color: #dc3545; font-weight: bold; z-index: 10;" title="Приховати дисципліну">✕</button>`;
+
     const innerContent = `
-        <div>
+        <div style="position: relative;">
+            ${hideBtnHtml}
             <span class="badge-type">${typeInfo.name}</span>
-            <div class="lesson-title">${escapeHtml(lesson.title)}</div>
+            <div class="lesson-title" ${lesson.link ? 'style="text-decoration: underline;"' : ''}>${escapeHtml(lesson.title)}</div>
         </div>
-        <div class="lesson-footer">
+        <div class="lesson-footer mt-1">
             ${lesson.lecturer ? `<div>${escapeHtml(lesson.lecturer)}</div>` : ''}
             ${locationHtml}
         </div>
     `;
 
-    // Если есть ссылка на онлайн-пару — карточка кликабельна
     if (lesson.link) {
-        return `<a href="${encodeURI(lesson.link)}" target="_blank" rel="noopener noreferrer" class="lesson-card ${typeInfo.cssClass}">${innerContent}</a>`;
+        return `<div class="lesson-card ${typeInfo.cssClass} clickable-card" data-url="${encodeURI(lesson.link)}" style="cursor: pointer;" title="Перейти на заняття">${innerContent}</div>`;
     }
 
     return `<div class="lesson-card ${typeInfo.cssClass}">${innerContent}</div>`;
@@ -150,7 +152,7 @@ function renderScheduleTable() {
 
         for (let j = 0; j < DAYS.length; j++) {
             const day = DAYS[j];
-            const lessons = weekData[day.code]?.[slot.slot] || [];
+            const lessons = (weekData[day.code]?.[slot.slot] || []).filter(lesson => !hiddenSubjects.includes(lesson.title));
             let cellContent = '';
 
             if (lessons.length > 0) {
@@ -259,6 +261,42 @@ dom.mobileDaySelector.addEventListener('click', (e) => {
 dom.weekSelector.querySelectorAll('button').forEach(btn => {
     btn.classList.toggle('active', Number(btn.dataset.week) === displayedWeek);
 });
+
+dom.scheduleBody.addEventListener('click', (e) => {
+    const hideBtn = e.target.closest('.hide-subject-btn');
+    if (hideBtn) {
+        e.preventDefault();
+        const subjectTitle = hideBtn.dataset.title;
+        if (!hiddenSubjects.includes(subjectTitle)) {
+            hiddenSubjects.push(subjectTitle);
+            localStorage.setItem('hiddenSubjects', JSON.stringify(hiddenSubjects));
+            renderScheduleTable();
+        }
+        return;
+    }
+
+    if (e.target.closest('a')) {
+        return;
+    }
+
+    const clickableCard = e.target.closest('.clickable-card');
+    if (clickableCard) {
+        window.open(clickableCard.dataset.url, '_blank');
+    }
+});
+
+function resetHiddenSubjects() {
+    hiddenSubjects = [];
+    localStorage.removeItem('hiddenSubjects');
+    renderScheduleTable();
+}
+
+const resetBtn = document.getElementById('reset-hidden-btn');
+if (resetBtn) {
+    resetBtn.addEventListener('click', resetHiddenSubjects);
+}
+
+window.resetHiddenSubjects = resetHiddenSubjects;
 
 fetchSchedule();
 setInterval(updateLiveStatus, 60000);

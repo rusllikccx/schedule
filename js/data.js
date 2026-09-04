@@ -46,6 +46,11 @@ export const ONLINE_LINKS = [
         link: "https://us02web.zoom.us/j/78796314863?pwd=Tll2SFBxaWFUc3JiM1d4VjNpZStTQT09"
     },
     {
+        title: "Бази даних та інформаційні системи",
+        lecturer: "Личик",
+        link: "https://us05web.zoom.us/j/4177321997?pwd=QXQ5VWhzdU1CM01nZ3BWSVh6d0ZQUT09"
+    },
+    {
         title: "Логіка",
         lecturer: "Потіщук",
         link: "https://us04web.zoom.us/j/2592042684?pwd=WVkraTNYc0tHQW1YTVdndGpHeFhtZz09"
@@ -68,7 +73,7 @@ export const ONLINE_LINKS = [
     {
         title: "Твої гроші: фінансові рішення у повсякденному житті",
         lecturer: "Голюк",
-        link: "https://us04web.zoom.us/j/9762729233?pwd=eDhGQW9SVktGb0kvODFmaVNlYXIrQT09"
+        link: "https://us04web.zoom.us/j/9762729233?pwd=eDhGQW9SVktGb0kvODFmaVNlYXNrQT09"
     },
     {
         title: "Цифровий бізнес",
@@ -83,6 +88,31 @@ export const ONLINE_LINKS = [
     {
         title: "Вступ до аналізу шкідливого програмного забезпечення",
         lecturer: "Ільїн",
-        link: "https://moodle.example.com/malware"
-    }
+        link: "https://bbb.kpi.ua/b/myk-gft-nlr-gx2"
+    },
+    {
+        title: "Вступ до аналізу шкідливого програмного забезпечення",
+        lecturer: "Войцеховський",
+        link: "https://bbb.kpi.ua/b/uwq-ofo-gce-lhw"
+    },
+    {
+        title: "Функціональні залежності та системи",
+        lecturer: "Крюков",
+        link: "https://us05web.zoom.us/j/2612862666?pwd=YikoxTv2OWTacEmQ30mp4LusrriEtL.1"
+    },
+    {
+        title: "Англійська мова професійного спрямування",
+        lecturer: "Гавриленко",
+        link: "http://meet.google.com/aoy-hbrn-tdn"
+    },
+    {
+        title: "Моделі рефлексії у кібербезпеці",
+        lecturer: "Рибак",
+        link: ""
+    },
+    {
+        title: "Моделі рефлексії у кібербезпеці",
+        lecturer: "Смирнов",
+        link: ""
+    },
 ];
