@@ -48,8 +48,12 @@
 
     let rawWeekData = $derived(displayedWeek === 1 ? scheduleData.week1 : scheduleData.week2);
 
-    // Filter out hidden subjects from the current week's displayed lessons
+    // In edit mode (showRemoveControls = true), display all subjects so hidden ones can be seen (as gray) and restored.
+    // In normal mode, filter out hidden subjects completely.
     let currentWeekData = $derived.by(() => {
+        if (showRemoveControls) {
+            return rawWeekData;
+        }
         const filtered: typeof rawWeekData = {};
         for (const dayCode of Object.keys(rawWeekData)) {
             filtered[dayCode] = {};
@@ -248,13 +252,18 @@
         }
     }
 
+    function unhideSubject(subjectTitle: string) {
+        hiddenSubjects = hiddenSubjects.filter(s => s !== subjectTitle);
+        saveHiddenSubjects(hiddenSubjects);
+    }
+
     function resetHiddenSubjects() {
         hiddenSubjects = [];
         clearHiddenSubjects();
     }
 
     async function loadScheduleData() {
-        // Step 1: Stale-While-Revalidate - Immediate instant load from cache
+        // Step 1: Immediate instant load from persistent cache (renders in 0ms)
         const cached = getCachedSchedule();
         if (cached) {
             scheduleData = cached;
@@ -264,13 +273,18 @@
         }
         error = null;
 
-        // Step 2: Fetch fresh data (consumes early fetch promise from HTML head or executes network fetch)
+        // Step 2: Fetch fresh data from API
         try {
             const fresh = await fetchSchedule();
-            scheduleData = fresh;
+            // Deep compare with existing schedule to only trigger re-render and cache update when changed
+            const currentJson = JSON.stringify(scheduleData);
+            const freshJson = JSON.stringify(fresh);
+            if (currentJson !== freshJson) {
+                scheduleData = fresh;
+            }
         } catch (err: unknown) {
             console.error('Failed to load schedule:', err);
-            // If we didn't have cached data, show error message
+            // If offline or API fails, keep showing cached schedule; only show error if no cache exists
             if (!cached) {
                 error = 'Не вдалося завантажити розклад з API';
             }
@@ -303,38 +317,6 @@
 <div class="container-fluid px-2 px-md-4">
     <header class="d-flex flex-column align-items-center mb-3">
         <h1 class="main-title fw-bold mb-2 text-center">Розклад занять</h1>
-
-        <!-- Live Status Card & Pair Slider -->
-        <div class="live-status-card w-100 mb-3 shadow-sm status-{todayLiveStatus.color}">
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-1 mb-2">
-                <div class="d-flex flex-column">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="status-indicator"></span>
-                        <span class="status-title fw-bold">{todayLiveStatus.title}</span>
-                    </div>
-                    {#if todayLiveStatus.subtitle}
-                        <span class="status-time text-muted small">{todayLiveStatus.subtitle}</span>
-                    {/if}
-                </div>
-                <div class="status-stats text-sm-end text-muted small">
-                    <span class="badge-count passed-count">Пройшло: <strong>{todayLiveStatus.passedPairs}</strong></span>
-                    <span class="mx-1">•</span>
-                    <span class="badge-count remaining-count">Залишилось: <strong>{todayLiveStatus.remainingPairs}</strong></span>
-                    {#if todayLiveStatus.totalPairs > 0}
-                        <span class="mx-1">•</span>
-                        <span class="badge-count total-count">Всього: {todayLiveStatus.totalPairs}</span>
-                    {/if}
-                </div>
-            </div>
-
-            <!-- Progress Slider -->
-            <div class="live-progress-track" role="progressbar" aria-valuenow={todayLiveStatus.percent} aria-valuemin="0" aria-valuemax="100">
-                <div
-                    class="live-progress-bar progress-{todayLiveStatus.color}"
-                    style="width: {todayLiveStatus.percent}%;"
-                ></div>
-            </div>
-        </div>
 
         <div class="header-toolbar w-100 mb-2">
             <div class="header-left-actions d-flex align-items-center gap-2">
@@ -383,7 +365,33 @@
                 </div>
             </div>
 
-            <div class="header-right-spacer d-none d-md-block"></div>
+            <div class="header-right-action">
+                <!-- Live Status & Progress Slider (compact) -->
+                <div class="live-status-card status-{todayLiveStatus.color}">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                        <div class="d-flex align-items-center gap-1 text-truncate">
+                            <span class="status-indicator"></span>
+                            <span class="status-title fw-bold text-truncate">{todayLiveStatus.title}</span>
+                        </div>
+                        <div class="status-stats text-muted small text-nowrap">
+                            <span class="badge-count">П: <strong>{todayLiveStatus.passedPairs}</strong></span>
+                            <span class="mx-1">•</span>
+                            <span class="badge-count">З: <strong>{todayLiveStatus.remainingPairs}</strong></span>
+                        </div>
+                    </div>
+
+                    {#if todayLiveStatus.subtitle}
+                        <div class="status-time text-muted small text-truncate mb-1">{todayLiveStatus.subtitle}</div>
+                    {/if}
+
+                    <div class="live-progress-track" role="progressbar" aria-valuenow={todayLiveStatus.percent} aria-valuemin="0" aria-valuemax="100">
+                        <div
+                            class="live-progress-bar progress-{todayLiveStatus.color}"
+                            style="width: {todayLiveStatus.percent}%;"
+                        ></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div
@@ -454,7 +462,9 @@
                                         isSlotActive={isCurrentWeek && currentDay === day.num && activeSlot === slot.slot}
                                         cellId="toggle-w{displayedWeek}-{day.num}-{slot.slot}"
                                         {showRemoveControls}
+                                        {hiddenSubjects}
                                         onHideSubject={hideSubject}
+                                        onUnhideSubject={unhideSubject}
                                     />
                                 </td>
                             {/each}

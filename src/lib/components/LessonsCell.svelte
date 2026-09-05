@@ -7,10 +7,20 @@
         isSlotActive?: boolean;
         cellId: string;
         showRemoveControls?: boolean;
+        hiddenSubjects?: string[];
         onHideSubject?: (title: string) => void;
+        onUnhideSubject?: (title: string) => void;
     }
 
-    let { lessons, isSlotActive = false, cellId, showRemoveControls = false, onHideSubject }: Props = $props();
+    let {
+        lessons,
+        isSlotActive = false,
+        cellId,
+        showRemoveControls = false,
+        hiddenSubjects = [],
+        onHideSubject,
+        onUnhideSubject
+    }: Props = $props();
 
     let visibleLessons = $derived(lessons.slice(0, 3));
     let hiddenLessons = $derived(lessons.slice(3));
@@ -23,7 +33,9 @@
                 {lesson}
                 isActive={isSlotActive}
                 {showRemoveControls}
+                isHidden={hiddenSubjects.includes(lesson.title)}
                 onHide={onHideSubject}
+                onUnhide={onUnhideSubject}
             />
         {/each}
     {:else}
@@ -32,7 +44,9 @@
                 {lesson}
                 isActive={isSlotActive}
                 {showRemoveControls}
+                isHidden={hiddenSubjects.includes(lesson.title)}
                 onHide={onHideSubject}
+                onUnhide={onUnhideSubject}
             />
         {/each}
 
@@ -46,7 +60,9 @@
                         {lesson}
                         isActive={isSlotActive}
                         {showRemoveControls}
+                        isHidden={hiddenSubjects.includes(lesson.title)}
                         onHide={onHideSubject}
+                        onUnhide={onUnhideSubject}
                     />
                 {/each}
             </div>

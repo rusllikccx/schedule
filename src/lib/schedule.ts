@@ -222,7 +222,7 @@ export async function fetchSchedule(
         week2: transformWeekData(rawData.scheduleSecondWeek)
     };
 
-    // Save to client cache
+    // Save to permanent client cache
     setCachedSchedule(transformed);
 
     return transformed;

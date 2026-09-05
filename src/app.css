@@ -31,17 +31,17 @@ body {
 
 .header-toolbar {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 992px) {
     .header-toolbar {
         display: grid;
         grid-template-columns: 1fr auto 1fr;
         align-items: center;
+        gap: 1.5rem;
     }
 
     .header-left-actions {
@@ -52,8 +52,22 @@ body {
         justify-self: center;
     }
 
-    .header-right-spacer {
-        justify-self: end;
+    .header-right-action {
+        justify-self: stretch;
+        width: 100%;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+    .header-toolbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.75rem;
+    }
+
+    .header-right-action {
+        grid-column: 1 / -1;
+        width: 100%;
     }
 }
 
@@ -61,92 +75,95 @@ body {
     font-size: clamp(1.75rem, 4vw, 2.5rem);
 }
 
-/* Live Status & Progress Slider */
+/* Live Status & Progress Slider (Minimalist & Professional) */
 .live-status-card {
     background-color: #ffffff;
-    border-radius: 10px;
-    padding: 10px 14px;
-    border: 1px solid var(--border-color);
-    max-width: 900px;
-    transition: border-color 0.2s ease;
+    border-radius: 6px;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    width: 100%;
+    position: relative;
 }
 
 .live-status-card.status-green {
-    border-left: 4px solid #10b981;
+    border-left: 3px solid #059669;
 }
 
 .live-status-card.status-yellow {
-    border-left: 4px solid #f59e0b;
+    border-left: 3px solid #d97706;
 }
 
 .live-status-card.status-gray {
-    border-left: 4px solid #94a3b8;
+    border-left: 3px solid #94a3b8;
 }
 
 .status-indicator {
-    width: 9px;
-    height: 9px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
 }
 
 .status-green .status-indicator {
-    background-color: #10b981;
-    box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
-    animation: pulse-dot 2s infinite ease-in-out;
+    background-color: #059669;
 }
 
 .status-yellow .status-indicator {
-    background-color: #f59e0b;
-    box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+    background-color: #d97706;
 }
 
 .status-gray .status-indicator {
     background-color: #94a3b8;
 }
 
-@keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.85); }
-}
-
 .status-title {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
+    font-weight: 600;
     color: #1e293b;
+    letter-spacing: -0.01em;
 }
 
 .status-time {
-    font-size: 0.8rem;
-    margin-left: 17px;
+    font-size: 0.76rem;
+    color: #64748b;
+    margin-left: 11px;
+    letter-spacing: 0.01em;
+}
+
+.badge-count {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
 }
 
 .badge-count strong {
-    color: #0f172a;
+    color: #1e293b;
+    font-weight: 600;
 }
 
 .live-progress-track {
     width: 100%;
-    height: 7px;
+    height: 4px;
     background-color: #f1f5f9;
-    border-radius: 9999px;
+    border-radius: 2px;
     overflow: hidden;
+    margin-top: 6px;
 }
 
 .live-progress-bar {
     height: 100%;
-    border-radius: 9999px;
-    transition: width 0.4s ease, background-color 0.3s ease;
+    border-radius: 2px;
+    transition: width 0.3s ease;
 }
 
 .progress-green {
-    background-color: #10b981;
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+    background-color: #059669;
 }
 
 .progress-yellow {
-    background-color: #f59e0b;
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    background-color: #d97706;
 }
 
 .progress-gray {
@@ -297,6 +314,20 @@ a.lesson-card:hover .lesson-title {
     border-top: 1px dashed rgba(0, 0, 0, 0.08);
 }
 
+.location-link {
+    color: #000000 !important;
+    text-decoration: underline;
+    text-decoration-color: rgba(0, 0, 0, 0.4);
+    text-underline-offset: 2px;
+    font-weight: 500;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.location-link:hover {
+    color: #000000 !important;
+    text-decoration-color: #000000;
+}
+
 .hide-subject-btn {
     position: absolute;
     top: 2px;
@@ -317,6 +348,47 @@ a.lesson-card:hover .lesson-title {
 .hide-subject-btn:hover {
     background-color: rgba(220, 53, 69, 0.12);
     transform: scale(1.15);
+}
+
+.restore-subject-btn {
+    color: #059669;
+    font-size: 1rem;
+}
+
+.restore-subject-btn:hover {
+    background-color: rgba(5, 150, 105, 0.15);
+    color: #047857;
+    transform: scale(1.2);
+}
+
+/* Grayed-out state for hidden/removed lessons in edit mode */
+.lesson-card.is-hidden {
+    --card-color: #94a3b8 !important;
+    background-color: #f1f5f9 !important;
+    border: 1px dashed #cbd5e1 !important;
+    opacity: 0.65;
+    filter: grayscale(1);
+    transition: opacity 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+}
+
+.lesson-card.is-hidden:hover {
+    opacity: 0.9;
+    filter: grayscale(0.4);
+    border-color: #94a3b8 !important;
+}
+
+.lesson-card.is-hidden .badge-type {
+    background-color: #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+.lesson-card.is-hidden .lesson-title {
+    text-decoration: line-through;
+    color: #64748b !important;
+}
+
+.lesson-card.is-hidden .lesson-footer {
+    color: #94a3b8 !important;
 }
 
 .current-lesson-active {

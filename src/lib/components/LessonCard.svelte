@@ -5,31 +5,45 @@
         lesson: Lesson;
         isActive?: boolean;
         showRemoveControls?: boolean;
+        isHidden?: boolean;
         onHide?: (title: string) => void;
+        onUnhide?: (title: string) => void;
     }
 
-    let { lesson, isActive = false, showRemoveControls = false, onHide }: Props = $props();
+    let {
+        lesson,
+        isActive = false,
+        showRemoveControls = false,
+        isHidden = false,
+        onHide,
+        onUnhide
+    }: Props = $props();
 
     let typeInfo = $derived(LESSON_TYPES[lesson.type] || LESSON_TYPES[LessonType.Other]);
 
-    function handleHide(e: MouseEvent) {
+    function handleToggle(e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-        onHide?.(lesson.title);
+        if (isHidden) {
+            onUnhide?.(lesson.title);
+        } else {
+            onHide?.(lesson.title);
+        }
     }
 </script>
 
 {#snippet cardContent()}
     <div style="position: relative;">
-        {#if showRemoveControls && onHide}
+        {#if showRemoveControls}
             <button
                 type="button"
                 class="hide-subject-btn"
-                onclick={handleHide}
-                title="Приховати дисципліну"
-                aria-label="Приховати дисципліну"
+                class:restore-subject-btn={isHidden}
+                onclick={handleToggle}
+                title={isHidden ? 'Відновити дисципліну' : 'Приховати дисципліну'}
+                aria-label={isHidden ? 'Відновити дисципліну' : 'Приховати дисципліну'}
             >
-                ✕
+                {isHidden ? '↩' : '✕'}
             </button>
         {/if}
         <span class="badge-type">{typeInfo.name}</span>
@@ -69,6 +83,7 @@
         rel="noopener noreferrer"
         class="lesson-card {typeInfo.cssClass}"
         class:current-lesson-active={isActive}
+        class:is-hidden={isHidden}
     >
         {@render cardContent()}
     </a>
@@ -76,6 +91,7 @@
     <div
         class="lesson-card {typeInfo.cssClass}"
         class:current-lesson-active={isActive}
+        class:is-hidden={isHidden}
     >
         {@render cardContent()}
     </div>
