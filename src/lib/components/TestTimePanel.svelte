@@ -17,7 +17,7 @@
         onResetToRealTime
     }: Props = $props();
 
-    let isExpanded = $state(false);
+    let isExpanded = $state(true);
 
     // Format helpers
     function pad(n: number) {
@@ -84,20 +84,19 @@
     <div class="test-panel-header d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
             <span class="test-badge">🧪 Тест-режим</span>
-            <div class="form-check form-switch m-0 d-flex align-items-center">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
-                    role="switch"
-                    id="testModeSwitch"
-                    checked={isTestMode}
-                    onchange={(e) => onToggleTestMode(e.currentTarget.checked)}
-                />
-            </div>
             {#if isTestMode}
-                <span class="test-current-label text-truncate">
+            <span class="test-current-label text-truncate">
                     {DAYS.find(d => d.num === currentDayNum)?.shortName || 'Нд'}, {timeString} ({currentWeekNum === 1 ? 'Непарний' : 'Парний'})
                 </span>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger py-0 px-2 test-btn-sm"
+                    onclick={() => onToggleTestMode(false)}
+                    title="Вимкнути тест-режим та закрити вікно"
+                >
+                    ✕ Вийти
+                </button>
+                
             {/if}
         </div>
 

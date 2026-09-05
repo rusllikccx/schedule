@@ -32,3 +32,7 @@ server/schedule-api
 server/*.exe
 server/*.tmp
 build/schedule-api
+
+# Local tools & agents
+.agents
+fix.bat

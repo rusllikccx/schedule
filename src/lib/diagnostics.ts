@@ -276,4 +276,6 @@ function printReport(data: DiagnosticData) {
 
     // Small help tip without styling
     console.log('Викличте window.__printDiagnostics() у консолі для оновлення даних.');
+    console.log('Викличте window.__toggleTestMode(true) у консолі для увімкнення тестового режиму.');
+
 }

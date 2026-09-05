@@ -3,6 +3,7 @@
 declare global {
 	interface Window {
 		__SCHEDULE_PROMISE__?: Promise<any>;
+		__toggleTestMode?: (forced?: boolean) => void;
 	}
 	namespace App {
 		// interface Error {}

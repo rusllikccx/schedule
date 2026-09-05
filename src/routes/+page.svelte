@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { replaceState } from '$app/navigation';
     import {
         TIME_SLOTS,
         DAYS,
@@ -343,10 +344,26 @@
             displayedWeek = getActualCurrentWeek(testDate);
             const d = testDate.getDay();
             selectedMobileDay = d === 0 ? 1 : d;
+
+            if (typeof window !== 'undefined' && !window.location.search.includes('test')) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('test', '');
+                const cleanQuery = url.searchParams.toString().replace(/test=(&|$)/, 'test$1');
+                const target = url.pathname + (cleanQuery ? `?${cleanQuery}` : '') + url.hash;
+                replaceState(target, {});
+            }
         } else {
             displayedWeek = getActualCurrentWeek(currentTime);
             const d = currentTime.getDay();
             selectedMobileDay = d === 0 ? 1 : d;
+
+            if (typeof window !== 'undefined' && window.location.search.includes('test')) {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('test');
+                const newQuery = url.searchParams.toString();
+                const target = url.pathname + (newQuery ? `?${newQuery}` : '') + url.hash;
+                replaceState(target, {});
+            }
         }
     }
 
@@ -403,12 +420,26 @@
             linksCount: currentLinks.length
         }));
 
+        // 5. Open test mode if ?test is present in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('test')) {
+            handleToggleTestMode(true);
+        }
+
+        // 6. Expose window.__toggleTestMode for developer console access
+        window.__toggleTestMode = (forced?: boolean) => {
+            const next = typeof forced === 'boolean' ? forced : !isTestMode;
+            handleToggleTestMode(next);
+            console.log(`[Schedule] Режим тестування: ${next ? 'УВІМКНЕНО' : 'ВИМКНЕНО'}`);
+        };
+
         const timer = setInterval(() => {
             currentTime = new Date();
         }, 10000);
 
         return () => {
             clearInterval(timer);
+            delete window.__toggleTestMode;
         };
     });
 </script>
@@ -417,16 +448,18 @@
     <header class="d-flex flex-column align-items-center mb-3">
         <h1 class="main-title fw-bold mb-2 text-center">Розклад занять</h1>
 
-        <!-- Time & Day Simulation Test Panel -->
-        <div class="w-100 mb-2">
-            <TestTimePanel
-                {isTestMode}
-                {testDate}
-                onToggleTestMode={handleToggleTestMode}
-                onSetTestDate={handleSetTestDate}
-                onResetToRealTime={handleResetToRealTime}
-            />
-        </div>
+        <!-- Time & Day Simulation Test Panel (Visible ONLY in test mode) -->
+        {#if isTestMode}
+            <div class="w-100 mb-2">
+                <TestTimePanel
+                    {isTestMode}
+                    {testDate}
+                    onToggleTestMode={handleToggleTestMode}
+                    onSetTestDate={handleSetTestDate}
+                    onResetToRealTime={handleResetToRealTime}
+                />
+            </div>
+        {/if}
 
         <div class="header-toolbar w-100 mb-2">
             <div class="header-left-actions d-flex align-items-center gap-2">
