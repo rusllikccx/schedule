@@ -1,0 +1,627 @@
+:root {
+    --bg-page: #f8fafc;
+    --border-color: #e2e8f0;
+    --active-day-bg: #f8faff;
+    --active-day-border: #b6d4fe;
+    --current-lesson-glow: rgba(16, 185, 129, 0.45);
+    
+    --color-lecture: #2563eb;
+    --color-practice: #d97706;
+    --color-lab: #9333ea;
+    --color-other: #475569;
+}
+
+body {
+    background-color: var(--bg-page);
+    background-image: radial-gradient(rgba(100, 116, 139, 0.22) 1.5px, transparent 1.5px);
+    background-size: 28px 28px;
+    min-height: 100vh;
+}
+
+#week-selector .btn,
+#mobile-day-buttons .btn {
+    background-color: #ffffff;
+}
+
+#week-selector .btn.active,
+#mobile-day-buttons .btn.btn-primary {
+    background-color: #0d6efd;
+    color: #ffffff;
+}
+
+.header-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+}
+
+@media (min-width: 992px) {
+    .header-toolbar {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .header-left-actions {
+        justify-self: start;
+    }
+
+    .header-center-actions {
+        justify-self: center;
+    }
+
+    .header-right-action {
+        justify-self: stretch;
+        width: 100%;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+    .header-toolbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.75rem;
+    }
+
+    .header-right-action {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}
+
+.main-title {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+/* Live Status & Progress Slider (Minimalist & Professional) */
+.live-status-card {
+    background-color: #ffffff;
+    border-radius: 6px;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    width: 100%;
+    position: relative;
+}
+
+.live-status-card.status-green {
+    border-left: 3px solid #059669;
+}
+
+.live-status-card.status-yellow {
+    border-left: 3px solid #d97706;
+}
+
+.live-status-card.status-gray {
+    border-left: 3px solid #94a3b8;
+}
+
+.status-indicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.status-green .status-indicator {
+    background-color: #059669;
+}
+
+.status-yellow .status-indicator {
+    background-color: #d97706;
+}
+
+.status-gray .status-indicator {
+    background-color: #94a3b8;
+}
+
+.status-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1e293b;
+    letter-spacing: -0.01em;
+}
+
+.status-time {
+    font-size: 0.76rem;
+    color: #64748b;
+    margin-left: 11px;
+    letter-spacing: 0.01em;
+}
+
+.badge-count {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+}
+
+.badge-count strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.live-progress-track {
+    width: 100%;
+    height: 4px;
+    background-color: #f1f5f9;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.live-progress-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.progress-green {
+    background-color: #059669;
+}
+
+.progress-yellow {
+    background-color: #d97706;
+}
+
+.progress-gray {
+    background-color: #cbd5e1;
+}
+
+.schedule-table {
+    table-layout: fixed;
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+}
+
+.schedule-table tbody tr:not(:last-child) td {
+    border-bottom: 2px dashed #cbd5e1;
+}
+
+.schedule-table thead th {
+    background-color: #ffffff;
+    color: #495057;
+    font-weight: 600;
+    padding: 14px 8px;
+    text-align: center;
+    border-bottom: 2px solid #edf2f7;
+    border-right: 1px solid #f1f5f9;
+}
+
+.schedule-table .time-col {
+    width: 7.5%;
+    min-width: 75px;
+    padding: 8px 4px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    color: #495057;
+    background-color: #fafbfc;
+    text-align: center;
+    vertical-align: middle;
+    border-right: 1px solid #edf2f7;
+}
+
+.schedule-table td:not(.time-col) {
+    width: 15.4%;
+    padding: 10px 8px;
+    vertical-align: top;
+    border-right: 1px solid #f1f5f9;
+}
+
+.schedule-table th:last-child,
+.schedule-table td:last-child {
+    border-right: none;
+}
+
+.schedule-table th.current-day-header { 
+    background-color: #0d6efd; 
+    color: #ffffff; 
+}
+
+.schedule-table td.current-day-cell { 
+    background-color: var(--active-day-bg); 
+    border-left: 2px solid var(--active-day-border); 
+    border-right: 2px solid var(--active-day-border); 
+}
+
+.lesson-card {
+    --card-color: var(--color-other);
+    background-color: color-mix(in srgb, var(--card-color) 6%, white);
+    border: 1px solid color-mix(in srgb, var(--card-color) 20%, white);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 95px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+    text-align: left;
+    text-decoration: none;
+    color: inherit;
+    word-break: break-word;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lesson-card:last-child {
+    margin-bottom: 0;
+}
+
+.lesson-card.type-lecture  { --card-color: var(--color-lecture); }
+.lesson-card.type-practice { --card-color: var(--color-practice); }
+.lesson-card.type-lab      { --card-color: var(--color-lab); }
+.lesson-card.type-other    { --card-color: var(--color-other); }
+
+a.lesson-card {
+    cursor: pointer;
+}
+
+a.lesson-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    color: inherit;
+}
+
+.lesson-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    margin-bottom: 5px;
+}
+
+.badge-type {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    background-color: color-mix(in srgb, var(--card-color) 18%, white);
+    color: var(--card-color);
+}
+
+.badge-status {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+}
+
+.badge-status-current {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    animation: status-pulse 2s infinite ease-in-out;
+}
+
+@keyframes status-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.75; }
+}
+
+.badge-status-next {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.badge-status-ended {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.lesson-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: 5px;
+    color: #1a202c;
+}
+
+a.lesson-card .lesson-title {
+    text-decoration: underline;
+    text-decoration-color: #94a3b8;
+    text-underline-offset: 3px;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+a.lesson-card:hover .lesson-title {
+    color: var(--card-color);
+    text-decoration-color: var(--card-color);
+}
+
+.lesson-footer {
+    font-size: 0.7rem;
+    color: #718096;
+    margin-top: auto;
+    padding-top: 4px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+.location-link {
+    color: #000000 !important;
+    text-decoration: underline;
+    text-decoration-color: rgba(0, 0, 0, 0.4);
+    text-underline-offset: 2px;
+    font-weight: 500;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.location-link:hover {
+    color: #000000 !important;
+    text-decoration-color: #000000;
+}
+
+.hide-subject-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 0.85rem;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    z-index: 10;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.hide-subject-btn:hover {
+    background-color: rgba(220, 53, 69, 0.12);
+    transform: scale(1.15);
+}
+
+.restore-subject-btn {
+    color: #059669;
+    font-size: 1rem;
+}
+
+.restore-subject-btn:hover {
+    background-color: rgba(5, 150, 105, 0.15);
+    color: #047857;
+    transform: scale(1.2);
+}
+
+/* Grayed-out state for hidden/removed lessons in edit mode */
+.lesson-card.is-hidden {
+    --card-color: #94a3b8 !important;
+    background-color: #f1f5f9 !important;
+    border: 1px dashed #cbd5e1 !important;
+    opacity: 0.65;
+    filter: grayscale(1);
+    transition: opacity 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+}
+
+.lesson-card.is-hidden:hover {
+    opacity: 0.9;
+    filter: grayscale(0.4);
+    border-color: #94a3b8 !important;
+}
+
+.lesson-card.is-hidden .badge-type {
+    background-color: #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+.lesson-card.is-hidden .lesson-title {
+    text-decoration: line-through;
+    color: #64748b !important;
+}
+
+.lesson-card.is-hidden .lesson-footer {
+    color: #94a3b8 !important;
+}
+
+.current-lesson-active {
+    border: 1px solid #97cbbc !important;
+    box-shadow: 0 0 16px var(--current-lesson-glow), inset 0 0 4px rgba(16, 185, 129, 0.2) !important;
+    transform: scale(1.02);
+    position: relative;
+    z-index: 2;
+}
+
+.lessons-toggle {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+    margin: 0;
+}
+
+.lessons-toggle-btn {
+    cursor: pointer;
+    display: block;
+    background-color: #edf2f7;
+    border: 1px dashed #cbd5e1;
+    color: #4a5568;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 6px;
+    border-radius: 6px;
+    text-align: center;
+    margin-top: 8px;
+    transition: background-color 0.1s ease, color 0.1s ease;
+    user-select: none;
+}
+
+.lessons-toggle-btn:hover {
+    background-color: #e2e8f0;
+    color: #1a202c;
+}
+
+.lessons-expandable-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.15s ease-out;
+}
+
+.lessons-expandable-inner {
+    overflow: hidden;
+}
+
+.lessons-toggle:checked ~ .lessons-expandable-content {
+    grid-template-rows: 1fr;
+}
+
+@media (max-width: 768px) {
+    body { 
+        padding: 12px 6px; 
+    }
+
+    .header-left-actions {
+        justify-content: center;
+        width: 100%;
+    }
+
+    #toggle-remove-btn {
+        margin: 0 auto;
+    }
+
+    /* When reset button is visible alongside edit button on mobile, keep edit button centered while reset is square */
+    .header-left-actions:has(#reset-hidden-btn) {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    #reset-hidden-btn,
+    #edit-links-btn {
+        width: 33px;
+        height: 33px;
+        padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        line-height: 1;
+        border-radius: 6px;
+        flex-shrink: 0;
+    }
+
+    .schedule-table .time-col {
+        width: 22%;
+        min-width: 65px;
+        font-size: 0.78rem;
+        padding: 6px 2px;
+    }
+
+    .schedule-table th:not(.time-col),
+    .schedule-table td:not(.time-col) {
+        display: none;
+        width: 78%;
+        padding: 8px 6px;
+    }
+
+    .schedule-table th.mobile-active-day,
+    .schedule-table td.mobile-active-day {
+        display: table-cell;
+    }
+
+    .schedule-table tbody tr {
+        min-height: 115px;
+    }
+
+    .schedule-table td.time-col,
+    .schedule-table td.mobile-active-day {
+        height: 115px;
+    }
+}
+
+/* Edit Links Admin Modal */
+.links-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(3px);
+    z-index: 1050;
+}
+
+.links-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 95%;
+    max-width: 820px;
+    max-height: 88vh;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    z-index: 1060;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modal-fade-in 0.18s ease-out;
+}
+
+@keyframes modal-fade-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -46%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+.links-modal-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+}
+
+.links-modal-body {
+    padding: 16px 18px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.links-table-wrapper {
+    max-height: 48vh;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.link-item-row {
+    transition: background-color 0.15s ease;
+}
+
+.link-item-row:hover {
+    background-color: #f8fafc;
+}
+
+.links-modal-footer {
+    padding: 12px 18px;
+    border-top: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+}
+

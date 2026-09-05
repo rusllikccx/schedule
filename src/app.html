@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="uk">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="text-scale" content="scale" />
+		<title>Розклад занять</title>
+		<link rel="preconnect" href="https://api.campus.kpi.ua" crossorigin>
+		<link rel="dns-prefetch" href="https://api.campus.kpi.ua">
+		<script>
+			// Early fetch triggered while HTML is parsing, running in parallel with JS bundles
+			window.__SCHEDULE_PROMISE__ = fetch('https://api.campus.kpi.ua/schedule/lessons?groupId=5598')
+				.then(function(res) { return res.ok ? res.json() : null; })
+				.catch(function() { return null; });
+		</script>
+		<link rel="icon" href="/images/favicon.ico" sizes="all">
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>
