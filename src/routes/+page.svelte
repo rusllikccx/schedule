@@ -25,6 +25,7 @@
     import LessonsCell from '$lib/components/LessonsCell.svelte';
     import EditLinksModal from '$lib/components/EditLinksModal.svelte';
     import TestTimePanel from '$lib/components/TestTimePanel.svelte';
+    import { initDiagnostics } from '$lib/diagnostics';
 
     let displayedWeek = $state(1);
     let selectedMobileDay = $state(1);
@@ -395,6 +396,12 @@
                 scheduleData = applyLinksToSchedule(scheduleData);
             }
         });
+
+        // 4. Initialize zero-overhead background diagnostics in console
+        initDiagnostics(() => ({
+            hiddenSubjectsCount: hiddenSubjects.length,
+            linksCount: currentLinks.length
+        }));
 
         const timer = setInterval(() => {
             currentTime = new Date();

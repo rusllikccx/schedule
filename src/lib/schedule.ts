@@ -33,6 +33,7 @@ export type {
 };
 
 const LINKS_STORAGE_KEY = 'kpi_online_links_v1';
+const LINKS_UPDATED_AT_KEY = 'kpi_online_links_updated_at_v1';
 export const LINKS_API_URL = '/api/links';
 
 /**
@@ -58,6 +59,27 @@ export function setActiveOnlineLinks(links: OnlineLink[]) {
         lecturerLower: (entry.lecturer || '').trim().toLowerCase(),
         link: (entry.link || '').trim()
     }));
+}
+
+/**
+ * Returns formatted date of last update for cached links.
+ */
+export function getLinksUpdatedAt(): string | null {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
+    try {
+        const ts = localStorage.getItem(LINKS_UPDATED_AT_KEY);
+        if (ts) {
+            return new Date(ts).toLocaleString('uk-UA');
+        }
+        if (localStorage.getItem(LINKS_STORAGE_KEY)) {
+            const nowIso = new Date().toISOString();
+            localStorage.setItem(LINKS_UPDATED_AT_KEY, nowIso);
+            return new Date(nowIso).toLocaleString('uk-UA');
+        }
+    } catch {
+        // ignore
+    }
+    return null;
 }
 
 /**
@@ -90,6 +112,7 @@ export function cacheOnlineLinks(links: OnlineLink[]): void {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         try {
             localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(links));
+            localStorage.setItem(LINKS_UPDATED_AT_KEY, new Date().toISOString());
         } catch (e) {
             console.warn('Failed to save links to localStorage cache', e);
         }
@@ -287,6 +310,28 @@ export function transformWeekData(apiDays?: ApiDay[] | null): WeekMap {
 }
 
 const SCHEDULE_CACHE_KEY = 'kpi_schedule_cache_v1';
+const SCHEDULE_UPDATED_AT_KEY = 'kpi_schedule_updated_at_v1';
+
+/**
+ * Returns formatted date of last update for cached schedule.
+ */
+export function getScheduleUpdatedAt(): string | null {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
+    try {
+        const ts = localStorage.getItem(SCHEDULE_UPDATED_AT_KEY);
+        if (ts) {
+            return new Date(ts).toLocaleString('uk-UA');
+        }
+        if (localStorage.getItem(SCHEDULE_CACHE_KEY)) {
+            const nowIso = new Date().toISOString();
+            localStorage.setItem(SCHEDULE_UPDATED_AT_KEY, nowIso);
+            return new Date(nowIso).toLocaleString('uk-UA');
+        }
+    } catch {
+        // ignore
+    }
+    return null;
+}
 
 /**
  * Retrieves cached schedule data from localStorage if present.
@@ -310,6 +355,7 @@ export function setCachedSchedule(data: ScheduleData): void {
     if (typeof window === 'undefined') return;
     try {
         localStorage.setItem(SCHEDULE_CACHE_KEY, JSON.stringify(data));
+        localStorage.setItem(SCHEDULE_UPDATED_AT_KEY, new Date().toISOString());
     } catch (e) {
         console.warn('Failed to save schedule to localStorage cache', e);
     }
