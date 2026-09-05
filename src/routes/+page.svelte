@@ -24,6 +24,7 @@
     } from '$lib/cookies';
     import LessonsCell from '$lib/components/LessonsCell.svelte';
     import EditLinksModal from '$lib/components/EditLinksModal.svelte';
+    import TestTimePanel from '$lib/components/TestTimePanel.svelte';
 
     let displayedWeek = $state(1);
     let selectedMobileDay = $state(1);
@@ -32,6 +33,10 @@
     let currentTime = $state(new Date());
     let hiddenSubjects = $state<string[]>([]);
     let showRemoveControls = $state(false);
+
+    // Test simulation mode state
+    let isTestMode = $state(false);
+    let testDate = $state(new Date());
 
     // Links editing state
     let isLinksModalOpen = $state(false);
@@ -43,10 +48,13 @@
         week2: createEmptyWeekMap()
     });
 
-    let actualWeek = $derived(getActualCurrentWeek(currentTime));
+    // When test mode is active, use testDate instead of real currentTime
+    let activeTime = $derived(isTestMode ? testDate : currentTime);
+
+    let actualWeek = $derived(getActualCurrentWeek(activeTime));
     let isCurrentWeek = $derived(displayedWeek === actualWeek);
-    let currentDay = $derived(currentTime.getDay());
-    let currentMinutes = $derived(currentTime.getHours() * 60 + currentTime.getMinutes());
+    let currentDay = $derived(activeTime.getDay());
+    let currentMinutes = $derived(activeTime.getHours() * 60 + activeTime.getMinutes());
 
     let activeSlot = $derived.by(() => {
         if (!isCurrentWeek) return null;
@@ -327,6 +335,36 @@
         }
     }
 
+    function handleToggleTestMode(enabled: boolean) {
+        isTestMode = enabled;
+        if (enabled) {
+            testDate = new Date(currentTime);
+            displayedWeek = getActualCurrentWeek(testDate);
+            const d = testDate.getDay();
+            selectedMobileDay = d === 0 ? 1 : d;
+        } else {
+            displayedWeek = getActualCurrentWeek(currentTime);
+            const d = currentTime.getDay();
+            selectedMobileDay = d === 0 ? 1 : d;
+        }
+    }
+
+    function handleSetTestDate(newDate: Date) {
+        testDate = newDate;
+        displayedWeek = getActualCurrentWeek(newDate);
+        const d = newDate.getDay();
+        selectedMobileDay = d === 0 ? 1 : d;
+    }
+
+    function handleResetToRealTime() {
+        const now = new Date();
+        currentTime = now;
+        testDate = new Date(now);
+        displayedWeek = getActualCurrentWeek(now);
+        const d = now.getDay();
+        selectedMobileDay = d === 0 ? 1 : d;
+    }
+
     function handleSaveLinksSuccess(updatedLinks: OnlineLink[], pwd: string) {
         currentLinks = updatedLinks;
         adminPassword = pwd;
@@ -371,6 +409,17 @@
 <div class="container-fluid px-2 px-md-4">
     <header class="d-flex flex-column align-items-center mb-3">
         <h1 class="main-title fw-bold mb-2 text-center">Розклад занять</h1>
+
+        <!-- Time & Day Simulation Test Panel -->
+        <div class="w-100 mb-2">
+            <TestTimePanel
+                {isTestMode}
+                {testDate}
+                onToggleTestMode={handleToggleTestMode}
+                onSetTestDate={handleSetTestDate}
+                onResetToRealTime={handleResetToRealTime}
+            />
+        </div>
 
         <div class="header-toolbar w-100 mb-2">
             <div class="header-left-actions d-flex align-items-center gap-2">
@@ -443,9 +492,9 @@
                             <span class="status-title fw-bold text-truncate">{todayLiveStatus.title}</span>
                         </div>
                         <div class="status-stats text-muted small text-nowrap">
-                            <span class="badge-count">П: <strong>{todayLiveStatus.passedPairs}</strong></span>
+                            <span class="badge-count">Пройшло: <strong>{todayLiveStatus.passedPairs}</strong></span>
                             <span class="mx-1">•</span>
-                            <span class="badge-count">З: <strong>{todayLiveStatus.remainingPairs}</strong></span>
+                            <span class="badge-count">Залишилось: <strong>{todayLiveStatus.remainingPairs}</strong></span>
                         </div>
                     </div>
 
@@ -556,6 +605,7 @@
     <EditLinksModal
         isOpen={isLinksModalOpen}
         links={currentLinks}
+        {scheduleData}
         initialPassword={adminPassword}
         onClose={() => (isLinksModalOpen = false)}
         onSaveSuccess={handleSaveLinksSuccess}

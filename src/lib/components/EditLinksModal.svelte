@@ -1,11 +1,12 @@
 <script lang="ts">
-    import type { OnlineLink } from '$lib/types';
+    import type { OnlineLink, ScheduleData } from '$lib/schedule';
     import { saveLinksToServer } from '$lib/schedule';
     import { saveStoredAdminPassword } from '$lib/cookies';
 
     interface Props {
         isOpen: boolean;
         links: OnlineLink[];
+        scheduleData?: ScheduleData;
         initialPassword?: string;
         onClose: () => void;
         onSaveSuccess: (updatedLinks: OnlineLink[], password: string) => void;
@@ -14,6 +15,7 @@
     let {
         isOpen = false,
         links = [],
+        scheduleData,
         initialPassword = '',
         onClose,
         onSaveSuccess
@@ -26,6 +28,48 @@
     let errorMessage = $state<string | null>(null);
     let successMessage = $state<string | null>(null);
 
+    // Mode for adding discipline from schedule
+    let isAddingMode = $state(false);
+    let addSearchQuery = $state('');
+
+    // Extract all unique disciplines and lecturers present in the schedule
+    let availableScheduleSubjects = $derived.by(() => {
+        if (!scheduleData) return [];
+        const map = new Map<string, { title: string; lecturer: string }>();
+
+        const inspectWeek = (weekMap: typeof scheduleData.week1) => {
+            for (const dayCode of Object.keys(weekMap)) {
+                for (const slotStr of Object.keys(weekMap[dayCode])) {
+                    const lessons = weekMap[dayCode][Number(slotStr)] || [];
+                    for (const l of lessons) {
+                        const key = `${l.title.trim()}|${(l.lecturer || '').trim()}`.toLowerCase();
+                        if (!map.has(key)) {
+                            map.set(key, {
+                                title: l.title.trim(),
+                                lecturer: (l.lecturer || '').trim()
+                            });
+                        }
+                    }
+                }
+            }
+        };
+
+        inspectWeek(scheduleData.week1);
+        inspectWeek(scheduleData.week2);
+
+        return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
+    });
+
+    // Filter available subjects based on addSearchQuery
+    let filteredScheduleSubjects = $derived.by(() => {
+        const q = addSearchQuery.trim().toLowerCase();
+        if (!q) return availableScheduleSubjects;
+        return availableScheduleSubjects.filter(s =>
+            s.title.toLowerCase().includes(q) ||
+            s.lecturer.toLowerCase().includes(q)
+        );
+    });
+
     // Synchronize editable list whenever modal opens or links change
     $effect(() => {
         if (isOpen) {
@@ -34,6 +78,8 @@
             errorMessage = null;
             successMessage = null;
             searchQuery = '';
+            isAddingMode = false;
+            addSearchQuery = '';
         }
     });
 
@@ -47,11 +93,35 @@
         );
     });
 
-    function handleAddLink() {
+    function startAdding() {
+        isAddingMode = true;
+        addSearchQuery = '';
+        errorMessage = null;
+    }
+
+    function cancelAdding() {
+        isAddingMode = false;
+        addSearchQuery = '';
+    }
+
+    function selectSubjectToAdd(subj: { title: string; lecturer: string }) {
+        // Add new item at the top with prefilled title and lecturer
         editableLinks = [
-            { title: '', lecturer: '', link: '' },
+            { title: subj.title, lecturer: subj.lecturer, link: '' },
             ...editableLinks
         ];
+        isAddingMode = false;
+        addSearchQuery = '';
+        searchQuery = subj.title; // filter list to show the newly added discipline
+    }
+
+    function addCustomEmptyLink() {
+        editableLinks = [
+            { title: addSearchQuery.trim(), lecturer: '', link: '' },
+            ...editableLinks
+        ];
+        isAddingMode = false;
+        addSearchQuery = '';
     }
 
     function handleRemoveLink(index: number) {
@@ -125,22 +195,92 @@
                 />
             </div>
 
-            <!-- Toolbar row: search + add button -->
-            <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mb-3">
-                <input
-                    type="text"
-                    class="form-control form-control-sm"
-                    placeholder="🔍 Пошук за назвою або викладачем..."
-                    bind:value={searchQuery}
-                />
-                <button
-                    type="button"
-                    class="btn btn-sm btn-outline-primary text-nowrap fw-semibold"
-                    onclick={handleAddLink}
-                >
-                    + Додати дисципліну
-                </button>
-            </div>
+            <!-- Toolbar row / Adding Mode switch -->
+            {#if !isAddingMode}
+                <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mb-3">
+                    <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        placeholder="🔍 Пошук за назвою або викладачем..."
+                        bind:value={searchQuery}
+                    />
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary text-nowrap fw-semibold"
+                        onclick={startAdding}
+                    >
+                        + Додати дисципліну
+                    </button>
+                </div>
+            {:else}
+                <div class="add-subject-picker p-3 border rounded mb-3 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold small text-primary">📚 Оберіть дисципліну з розкладу:</span>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary py-0 px-2 small"
+                            onclick={cancelAdding}
+                        >
+                            Скасувати
+                        </button>
+                    </div>
+
+                    <div class="input-group input-group-sm mb-2">
+                        <span class="input-group-text">🔍</span>
+                        <input
+                            type="text"
+                            class="form-control"
+                            placeholder="Введіть назву дисципліни з розкладу..."
+                            bind:value={addSearchQuery}
+                        />
+                        {#if addSearchQuery.trim()}
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                onclick={addCustomEmptyLink}
+                                title="Створити нову дисципліну з такою назвою"
+                            >
+                                Створити "{addSearchQuery.trim().slice(0, 18)}"
+                            </button>
+                        {/if}
+                    </div>
+
+                    <div class="schedule-subjects-list">
+                        {#if filteredScheduleSubjects.length === 0}
+                            <div class="p-2 text-center text-muted small bg-white rounded border">
+                                Дисципліну не знайдено в поточному розкладі.
+                                {#if addSearchQuery.trim()}
+                                    <button
+                                        type="button"
+                                        class="btn btn-link btn-sm p-0 ms-1"
+                                        onclick={addCustomEmptyLink}
+                                    >
+                                        Додати вручну
+                                    </button>
+                                {/if}
+                            </div>
+                        {:else}
+                            <div class="d-flex flex-column gap-1">
+                                {#each filteredScheduleSubjects as subj}
+                                    <button
+                                        type="button"
+                                        class="schedule-subject-item btn btn-sm btn-outline-light text-dark text-start d-flex justify-content-between align-items-center p-2 border"
+                                        onclick={() => selectSubjectToAdd(subj)}
+                                    >
+                                        <div class="text-truncate me-2">
+                                            <div class="fw-semibold text-truncate">{subj.title}</div>
+                                            {#if subj.lecturer}
+                                                <small class="text-muted text-truncate">{subj.lecturer}</small>
+                                            {/if}
+                                        </div>
+                                        <span class="badge bg-primary rounded-pill">+ Обрати</span>
+                                    </button>
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/if}
 
             {#if errorMessage}
                 <div class="alert alert-danger py-2 small mb-3">{errorMessage}</div>

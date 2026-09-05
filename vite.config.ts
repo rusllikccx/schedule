@@ -85,6 +85,9 @@ function goBackendPlugin(): Plugin {
 				}
 			};
 
+			process.on('exit', cleanup);
+			process.on('SIGINT', cleanup);
+			process.on('SIGTERM', cleanup);
 			process.once('exit', cleanup);
 			process.once('SIGINT', () => {
 				cleanup();
