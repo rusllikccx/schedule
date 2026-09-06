@@ -27,6 +27,7 @@
     import EditLinksModal from '$lib/components/EditLinksModal.svelte';
     import TestTimePanel from '$lib/components/TestTimePanel.svelte';
     import { initDiagnostics } from '$lib/diagnostics';
+    import { computeTodayLiveStatus } from '$lib/liveStatus';
 
     let displayedWeek = $state(1);
     let selectedMobileDay = $state(1);
@@ -35,6 +36,9 @@
     let currentTime = $state(new Date());
     let hiddenSubjects = $state<string[]>([]);
     let showRemoveControls = $state(false);
+
+    // Reactive Set for O(1) membership checks
+    let hiddenSubjectsSet = $derived(new Set(hiddenSubjects));
 
     // Test simulation mode state
     let isTestMode = $state(false);
@@ -80,7 +84,7 @@
             if (currentMinutes < s.startMin) {
                 const raw = rawTodaySlots[s.slot] || [];
                 const filtered = hiddenSubjects.length > 0
-                    ? raw.filter(l => !hiddenSubjects.includes(l.title))
+                    ? raw.filter(l => !hiddenSubjectsSet.has(l.title))
                     : raw;
                 if (filtered.length > 0) {
                     return s.slot;
@@ -105,184 +109,23 @@
                 const slotNum = Number(slotStr);
                 const lessons = rawWeekData[dayCode][slotNum] || [];
                 filtered[dayCode][slotNum] = hiddenSubjects.length > 0
-                    ? lessons.filter(lesson => !hiddenSubjects.includes(lesson.title))
+                    ? lessons.filter(lesson => !hiddenSubjectsSet.has(lesson.title))
                     : lessons;
             }
         }
         return filtered;
     });
 
-    // Compute live status, active pair, break, and progress slider for today
-    let todayLiveStatus = $derived.by(() => {
-        const todayMeta = DAYS.find(d => d.num === currentDay);
-        if (!todayMeta) {
-            return {
-                mode: 'no-pairs' as const,
-                title: 'Сьогодні вихідний',
-                subtitle: '',
-                passedPairs: 0,
-                remainingPairs: 0,
-                totalPairs: 0,
-                percent: 0,
-                color: 'gray' as const
-            };
-        }
-
-        // Today's actual week map
-        const todayWeekMap = actualWeek === 1 ? scheduleData.week1 : scheduleData.week2;
-        const rawTodaySlots = todayWeekMap[todayMeta.code] || {};
-
-        // Find pairs present today before vs after hidden filtering
-        let totalActiveToday = 0;
-        let slotsWithLessons: number[] = [];
-        let slotLessonsFiltered: Record<number, typeof rawTodaySlots[number]> = {};
-        let slotLessonsRaw: Record<number, typeof rawTodaySlots[number]> = {};
-
-        for (const s of TIME_SLOTS) {
-            const raw = rawTodaySlots[s.slot] || [];
-            const filtered = hiddenSubjects.length > 0
-                ? raw.filter(l => !hiddenSubjects.includes(l.title))
-                : raw;
-            slotLessonsRaw[s.slot] = raw;
-            slotLessonsFiltered[s.slot] = filtered;
-
-            if (filtered.length > 0) {
-                totalActiveToday++;
-                slotsWithLessons.push(s.slot);
-            }
-        }
-
-        // Check if currently inside a pair slot
-        const currentSlotIndex = TIME_SLOTS.findIndex(
-            s => currentMinutes >= s.startMin && currentMinutes <= s.endMin
-        );
-
-        if (currentSlotIndex !== -1) {
-            const slot = TIME_SLOTS[currentSlotIndex];
-            const filteredPairs = slotLessonsFiltered[slot.slot] || [];
-            const rawPairs = slotLessonsRaw[slot.slot] || [];
-
-            // How many active pairs have passed strictly before this slot
-            const passed = slotsWithLessons.filter(sn => sn < slot.slot).length;
-            const remaining = slotsWithLessons.filter(sn => sn > slot.slot).length;
-
-            if (filteredPairs.length > 0) {
-                // Active pair running right now!
-                const pairNames = filteredPairs.map(p => p.title).join(' / ');
-                const progressInSlot = Math.min(
-                    100,
-                    Math.max(0, ((currentMinutes - slot.startMin) / (slot.endMin - slot.startMin)) * 100)
-                );
-                const minutesLeft = slot.endMin - currentMinutes;
-
-                return {
-                    mode: 'active-pair' as const,
-                    title: pairNames,
-                    subtitle: `${slot.start} – ${slot.end} (залишилось ${minutesLeft} хв)`,
-                    passedPairs: passed,
-                    remainingPairs: remaining,
-                    totalPairs: totalActiveToday,
-                    percent: Math.round(progressInSlot),
-                    color: 'green' as const
-                };
-            } else if (rawPairs.length > 0) {
-                // User removed this pair
-                const removedName = rawPairs.map(p => p.title).join(' / ');
-                return {
-                    mode: 'removed-pair' as const,
-                    title: `${removedName} (приховано)`,
-                    subtitle: `${slot.start} – ${slot.end}`,
-                    passedPairs: passed,
-                    remainingPairs: remaining,
-                    totalPairs: totalActiveToday,
-                    percent: 0,
-                    color: 'gray' as const
-                };
-            } else {
-                // Window/free slot
-                return {
-                    mode: 'no-pairs' as const,
-                    title: 'Вільна пара (вікно)',
-                    subtitle: `${slot.start} – ${slot.end}`,
-                    passedPairs: passed,
-                    remainingPairs: remaining,
-                    totalPairs: totalActiveToday,
-                    percent: 0,
-                    color: 'gray' as const
-                };
-            }
-        }
-
-        // Check if currently inside a break between slots
-        const firstSlot = TIME_SLOTS[0];
-        const lastSlot = TIME_SLOTS[TIME_SLOTS.length - 1];
-
-        if (currentMinutes > firstSlot.startMin && currentMinutes < lastSlot.endMin) {
-            // Find the slot that just ended and the upcoming slot
-            for (let i = 0; i < TIME_SLOTS.length - 1; i++) {
-                const prev = TIME_SLOTS[i];
-                const next = TIME_SLOTS[i + 1];
-                if (currentMinutes > prev.endMin && currentMinutes < next.startMin) {
-                    const nextFiltered = slotLessonsFiltered[next.slot] || [];
-                    const nextRaw = slotLessonsRaw[next.slot] || [];
-                    const nextName = nextFiltered.length > 0
-                        ? nextFiltered.map(p => p.title).join(' / ')
-                        : (nextRaw.length > 0 ? `${nextRaw.map(p => p.title).join(' / ')} (приховано)` : 'Вільна пара');
-
-                    const passed = slotsWithLessons.filter(sn => sn <= prev.slot).length;
-                    const remaining = slotsWithLessons.filter(sn => sn >= next.slot).length;
-                    const breakDuration = next.startMin - prev.endMin;
-                    const breakElapsed = currentMinutes - prev.endMin;
-                    const breakLeft = next.startMin - currentMinutes;
-                    const percent = Math.min(100, Math.max(0, Math.round((breakElapsed / breakDuration) * 100)));
-
-                    return {
-                        mode: 'break' as const,
-                        title: `Перерва перед: ${nextName}`,
-                        subtitle: `Початок о ${next.start} (через ${breakLeft} хв)`,
-                        passedPairs: passed,
-                        remainingPairs: remaining,
-                        totalPairs: totalActiveToday,
-                        percent,
-                        color: 'yellow' as const
-                    };
-                }
-            }
-        }
-
-        // Before classes start
-        if (currentMinutes < firstSlot.startMin && totalActiveToday > 0) {
-            const firstActiveSlotNum = slotsWithLessons[0];
-            const firstActiveSlot = TIME_SLOTS.find(s => s.slot === firstActiveSlotNum) || firstSlot;
-            const firstName = (slotLessonsFiltered[firstActiveSlot.slot] || []).map(p => p.title).join(' / ');
-            const minsToStart = firstActiveSlot.startMin - currentMinutes;
-
-            return {
-                mode: 'break' as const,
-                title: `До початку занять: ${firstName || 'Пара'}`,
-                subtitle: `Початок о ${firstActiveSlot.start} (через ${minsToStart} хв)`,
-                passedPairs: 0,
-                remainingPairs: totalActiveToday,
-                totalPairs: totalActiveToday,
-                percent: 0,
-                color: 'yellow' as const
-            };
-        }
-
-        // After all classes ended or no classes today
-        const hasPassedAll = currentMinutes > lastSlot.endMin || (slotsWithLessons.length > 0 && currentMinutes > (TIME_SLOTS.find(s => s.slot === slotsWithLessons[slotsWithLessons.length - 1])?.endMin ?? 0));
-
-        return {
-            mode: 'no-pairs' as const,
-            title: totalActiveToday === 0 ? 'Сьогодні немає пар' : (hasPassedAll ? 'Всі пари на сьогодні завершено' : 'Немає пар'),
-            subtitle: '',
-            passedPairs: totalActiveToday,
-            remainingPairs: 0,
-            totalPairs: totalActiveToday,
-            percent: 0,
-            color: 'gray' as const
-        };
-    });
+    // Compute live status, active pair, break, and progress slider for today (extracted to isolated pure function)
+    let todayLiveStatus = $derived(
+        computeTodayLiveStatus({
+            currentDay,
+            currentMinutes,
+            actualWeek,
+            scheduleData,
+            hiddenSubjectsSet
+        })
+    );
 
     function toggleRemoveControls() {
         showRemoveControls = !showRemoveControls;
@@ -290,7 +133,7 @@
     }
 
     function hideSubject(subjectTitle: string) {
-        if (!hiddenSubjects.includes(subjectTitle)) {
+        if (!hiddenSubjectsSet.has(subjectTitle)) {
             hiddenSubjects = [...hiddenSubjects, subjectTitle];
             saveHiddenSubjects(hiddenSubjects);
         }
@@ -388,6 +231,69 @@
         adminPassword = pwd;
         // Re-apply updated links to current scheduleData so UI reflects new links instantly
         scheduleData = applyLinksToSchedule(scheduleData);
+    }
+
+    let toastMessage = $state<string | null>(null);
+    let toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    function showToast(message: string, duration = 3000) {
+        toastMessage = message;
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toastMessage = null;
+        }, duration);
+    }
+
+    let highlightedCellKey = $state<string | null>(null);
+    let highlightTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    function scrollOnHighlight(node: HTMLElement, isTarget: boolean) {
+        if (isTarget) {
+            setTimeout(() => {
+                node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }, 30);
+        }
+        return {
+            update(newIsTarget: boolean) {
+                if (newIsTarget) {
+                    setTimeout(() => {
+                        node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    }, 30);
+                }
+            }
+        };
+    }
+
+    function scrollToAndHighlightLesson(week: number, day: number, slot: number) {
+        const key = `cell-w${week}-${day}-${slot}`;
+        highlightedCellKey = key;
+        if (highlightTimeout) clearTimeout(highlightTimeout);
+        highlightTimeout = setTimeout(() => {
+            highlightedCellKey = null;
+        }, 2500);
+    }
+
+    function handleLiveStatusClick() {
+        const status = todayLiveStatus;
+
+        if (status.targetSlot && status.targetDay) {
+            // Point to the lesson!
+            if (displayedWeek !== actualWeek) {
+                displayedWeek = actualWeek;
+            }
+            if (status.targetDay >= 1 && status.targetDay <= 6) {
+                selectedMobileDay = status.targetDay;
+            }
+            scrollToAndHighlightLesson(actualWeek, status.targetDay, status.targetSlot);
+            return;
+        }
+
+        // If no lessons to point to, show appropriate toast
+        if (status.noLessonsReason === 'all-finished') {
+            showToast('Всі пари на сьогодні завершено');
+        } else {
+            showToast('Сьогодні немає пар');
+        }
     }
 
     onMount(() => {
@@ -524,8 +430,18 @@
             </div>
 
             <div class="header-right-action">
-                <!-- Live Status & Progress Slider (compact) -->
-                <div class="live-status-card status-{todayLiveStatus.color}">
+                <!-- Live Status & Progress Slider (clickable) -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <div
+                    class="live-status-card status-{todayLiveStatus.color}"
+                    role="button"
+                    tabindex="0"
+                    onclick={handleLiveStatusClick}
+                    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLiveStatusClick(); } }}
+                    title={todayLiveStatus.targetSlot
+                        ? (todayLiveStatus.mode === 'active-pair' ? 'Натисніть, щоб перейти до поточної пари' : 'Натисніть, щоб перейти до наступної пари')
+                        : (todayLiveStatus.noLessonsReason === 'all-finished' ? 'Всі пари на сьогодні завершено' : 'Сьогодні немає пар')}
+                >
                     <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
                         <div class="d-flex align-items-center gap-1 text-truncate">
                             <span class="status-indicator"></span>
@@ -617,11 +533,16 @@
                                             ? 'next'
                                             : (currentMinutes > slot.endMin ? 'ended' : null)))
                                     : null}
+                                {@const cellKey = `cell-w${displayedWeek}-${day.num}-${slot.slot}`}
+                                {@const isHighlighted = highlightedCellKey === cellKey}
                                 <td
+                                    id={cellKey}
                                     data-day={day.num}
                                     data-slot={slot.slot}
                                     class:current-day-cell={isTodayCell}
                                     class:mobile-active-day={selectedMobileDay === day.num}
+                                    class:highlight-pointed-lesson={isHighlighted}
+                                    use:scrollOnHighlight={isHighlighted}
                                 >
                                     <LessonsCell
                                         {lessons}
@@ -630,6 +551,7 @@
                                         cellId="toggle-w{displayedWeek}-{day.num}-{slot.slot}"
                                         {showRemoveControls}
                                         {hiddenSubjects}
+                                        {hiddenSubjectsSet}
                                         onHideSubject={hideSubject}
                                         onUnhideSubject={unhideSubject}
                                     />
@@ -650,4 +572,14 @@
         onClose={() => (isLinksModalOpen = false)}
         onSaveSuccess={handleSaveLinksSuccess}
     />
+
+    <!-- Toast Notification -->
+    {#if toastMessage}
+        <div class="schedule-toast-container" role="status" aria-live="polite">
+            <div class="schedule-toast shadow-lg">
+                <span class="schedule-toast-icon">ℹ️</span>
+                <span class="schedule-toast-text">{toastMessage}</span>
+            </div>
+        </div>
+    {/if}
 </div>

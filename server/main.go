@@ -1,14 +1,22 @@
 package main
 
 import (
+	"context"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
+	"syscall"
+	"time"
 )
 
 func getEnv(key, fallback string) string {
@@ -41,7 +49,7 @@ func findDefaultLinksFile() string {
 
 var (
 	port          = getEnv("PORT", "3001")
-	adminPassword = getEnv("ADMIN_PASSWORD", "secret123")
+	adminPassword = strings.TrimSpace(getEnv("ADMIN_PASSWORD", "secret123"))
 	filePath      = findDefaultLinksFile()
 )
 
@@ -51,10 +59,68 @@ type OnlineLink struct {
 	Link     string `json:"link"`
 }
 
+type LinksCache struct {
+	mu   sync.RWMutex
+	data []byte
+	etag string
+}
+
+var cache = &LinksCache{}
+
+func calculateETag(data []byte) string {
+	h := sha256.Sum256(data)
+	return `"` + hex.EncodeToString(h[:8]) + `"`
+}
+
+func etagMatches(clientETag, serverETag string) bool {
+	client := strings.TrimSpace(strings.TrimPrefix(clientETag, "W/"))
+	server := strings.TrimSpace(strings.TrimPrefix(serverETag, "W/"))
+	client = strings.Trim(client, `"`)
+	server = strings.Trim(server, `"`)
+	return client != "" && client == server
+}
+
+func (c *LinksCache) LoadFromDisk(path string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	data, err := os.ReadFile(path)
+	if err != nil || len(data) == 0 {
+		c.data = []byte("[]")
+		c.etag = calculateETag(c.data)
+		return err
+	}
+
+	c.data = data
+	c.etag = calculateETag(data)
+	return nil
+}
+
+func (c *LinksCache) Get() ([]byte, string) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if len(c.data) == 0 {
+		return []byte("[]"), calculateETag([]byte("[]"))
+	}
+	return c.data, c.etag
+}
+
+func (c *LinksCache) Set(data []byte) string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if len(data) == 0 {
+		data = []byte("[]")
+	}
+	c.data = data
+	c.etag = calculateETag(data)
+	return c.etag
+}
+
 func enableCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, If-None-Match")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Expose-Headers", "ETag")
 }
 
 func handleLinks(w http.ResponseWriter, r *http.Request) {
@@ -65,17 +131,20 @@ func handleLinks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. GET /api/links — return current links JSON
+	// 1. GET /api/links — return cached links JSON with ETag support
 	if r.Method == http.MethodGet {
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		data, etag := cache.Get()
 
-		data, err := os.ReadFile(filePath)
-		if err != nil {
-			// If file doesn't exist yet, return empty array
-			w.Write([]byte("[]"))
+		// If client sent If-None-Match matching our current ETag, return 304 Not Modified
+		if ifNoneMatch := r.Header.Get("If-None-Match"); ifNoneMatch != "" && etagMatches(ifNoneMatch, etag) {
+			w.Header().Set("ETag", etag)
+			w.WriteHeader(http.StatusNotModified)
 			return
 		}
+
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("ETag", etag)
 		w.Write(data)
 		return
 	}
@@ -85,7 +154,8 @@ func handleLinks(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		token := strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
 
-		if token == "" || token != adminPassword {
+		// Timing-attack safe comparison
+		if token == "" || subtle.ConstantTimeCompare([]byte(token), []byte(adminPassword)) != 1 {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(`{"error":"Невірний пароль адміністратора"}`))
@@ -127,14 +197,21 @@ func handleLinks(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := os.Rename(tmpFile, filePath); err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Не вдалося оновити links.json"}`))
-			return
+			if writeErr := os.WriteFile(filePath, formattedData, 0644); writeErr != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(`{"error":"Не вдалося оновити links.json"}`))
+				return
+			}
+			_ = os.Remove(tmpFile)
 		}
 
-		log.Printf("[ADMIN] Успішно оновлено %d посилань", len(links))
+		// Update in-memory cache and get new ETag
+		newETag := cache.Set(formattedData)
+
+		log.Printf("[ADMIN] Успішно оновлено %d посилань (ETag: %s)", len(links), newETag)
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("ETag", newETag)
 		w.Write([]byte(fmt.Sprintf(`{"success":true,"count":%d}`, len(links))))
 		return
 	}
@@ -143,7 +220,12 @@ func handleLinks(w http.ResponseWriter, r *http.Request) {
 }
 
 func monitorParentProcess() {
-	// 1. If stdin is closed by parent process, exit immediately
+	// Only monitor stdin if DEV_MODE is explicitly enabled (e.g. spawned by Vite dev plugin).
+	// In production with systemd or Docker, stdin is closed or /dev/null, so we must not read it.
+	if os.Getenv("DEV_MODE") != "1" {
+		return
+	}
+
 	go func() {
 		buf := make([]byte, 1)
 		for {
@@ -160,11 +242,44 @@ func main() {
 	log.Printf("Schedule Links API (Go) running on :%s", port)
 	log.Printf("Path to links file: %s", absPath)
 
+	// Load initial links from disk into in-memory cache
+	if err := cache.LoadFromDisk(filePath); err != nil {
+		log.Printf("Warning: Failed to load links from disk: %v", err)
+	} else {
+		_, etag := cache.Get()
+		log.Printf("Links cache initialized (ETag: %s)", etag)
+	}
+
 	monitorParentProcess()
 
-	http.HandleFunc("/api/links", handleLinks)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/links", handleLinks)
 
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatalf("Server startup failed: %v", err)
+	srv := &http.Server{
+		Addr:         ":" + port,
+		Handler:      mux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server startup failed: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Println("Shutting down Schedule Links API server gracefully...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Server shutdown warning: %v", err)
+	}
+	log.Println("Server exited cleanly.")
 }

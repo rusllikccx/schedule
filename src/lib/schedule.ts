@@ -34,6 +34,7 @@ export type {
 
 const LINKS_STORAGE_KEY = 'kpi_online_links_v1';
 const LINKS_UPDATED_AT_KEY = 'kpi_online_links_updated_at_v1';
+const LINKS_ETAG_KEY = 'kpi_online_links_etag_v1';
 export const LINKS_API_URL = '/api/links';
 
 /**
@@ -121,11 +122,28 @@ export function cacheOnlineLinks(links: OnlineLink[]): void {
 
 /**
  * Fetches latest links from backend /api/links and updates local cache.
+ * Supports ETag and 304 Not Modified for zero-data transfers.
  */
 export async function fetchServerOnlineLinks(apiUrl = LINKS_API_URL): Promise<OnlineLink[] | null> {
     try {
-        const res = await fetch(apiUrl, { cache: 'no-store' });
+        const storedETag = typeof localStorage !== 'undefined' ? localStorage.getItem(LINKS_ETAG_KEY) : null;
+        const headers: Record<string, string> = {};
+        if (storedETag) {
+            headers['If-None-Match'] = storedETag;
+        }
+
+        const res = await fetch(apiUrl, { headers });
+
+        // 304 Not Modified: Cached links are completely up to date
+        if (res.status === 304) {
+            return null;
+        }
+
         if (res.ok) {
+            const newETag = res.headers.get('ETag');
+            if (newETag && typeof localStorage !== 'undefined') {
+                localStorage.setItem(LINKS_ETAG_KEY, newETag);
+            }
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0) {
                 cacheOnlineLinks(data);
@@ -165,7 +183,11 @@ export async function saveLinksToServer(
             return { success: false, error: data.error || `Помилка сервера HTTP ${res.status}` };
         }
 
-        // Successfully saved on server -> update client cache
+        // Successfully saved on server -> update client cache and ETag if returned
+        const newETag = res.headers.get('ETag');
+        if (newETag && typeof localStorage !== 'undefined') {
+            localStorage.setItem(LINKS_ETAG_KEY, newETag);
+        }
         cacheOnlineLinks(links);
         return { success: true };
     } catch (err: unknown) {

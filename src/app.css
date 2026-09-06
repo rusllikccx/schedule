@@ -84,6 +84,18 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     width: 100%;
     position: relative;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.live-status-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transform: translateY(-1px);
+}
+
+.live-status-card:active {
+    transform: translateY(0);
 }
 
 .live-status-card.status-green {
@@ -705,5 +717,73 @@ a.lesson-card:hover .lesson-title {
 
 .quick-presets .btn {
     font-size: 0.72rem;
+}
+
+/* Floating Toast Notification */
+.schedule-toast-container {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    pointer-events: none;
+    animation: toastPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.schedule-toast {
+    background-color: #1e293b;
+    color: #f8fafc;
+    padding: 10px 22px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    pointer-events: auto;
+}
+
+.schedule-toast-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+@keyframes toastPop {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 14px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+/* Lesson pointing animation */
+@keyframes lessonPointPulse {
+    0% {
+        outline: 3px solid rgba(59, 130, 246, 0.9);
+        outline-offset: 2px;
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6);
+    }
+    40% {
+        outline: 3px solid #2563eb;
+        outline-offset: 4px;
+        box-shadow: 0 0 18px rgba(37, 99, 235, 0.45);
+    }
+    100% {
+        outline: 3px solid rgba(59, 130, 246, 0);
+        outline-offset: 2px;
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}
+
+.highlight-pointed-lesson {
+    animation: lessonPointPulse 2.5s ease-out forwards !important;
+    position: relative;
+    z-index: 15;
+    border-radius: 6px;
 }
 

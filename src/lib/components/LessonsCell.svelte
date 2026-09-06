@@ -9,6 +9,7 @@
         cellId: string;
         showRemoveControls?: boolean;
         hiddenSubjects?: string[];
+        hiddenSubjectsSet?: ReadonlySet<string>;
         onHideSubject?: (title: string) => void;
         onUnhideSubject?: (title: string) => void;
     }
@@ -20,9 +21,15 @@
         cellId,
         showRemoveControls = false,
         hiddenSubjects = [],
+        hiddenSubjectsSet,
         onHideSubject,
         onUnhideSubject
     }: Props = $props();
+
+    let isLessonHidden = (title: string) => {
+        if (hiddenSubjectsSet) return hiddenSubjectsSet.has(title);
+        return hiddenSubjects.includes(title);
+    };
 
     let visibleLessons = $derived(lessons.slice(0, 3));
     let hiddenLessons = $derived(lessons.slice(3));
@@ -36,7 +43,7 @@
                 isActive={isSlotActive}
                 status={lessonStatus}
                 {showRemoveControls}
-                isHidden={hiddenSubjects.includes(lesson.title)}
+                isHidden={isLessonHidden(lesson.title)}
                 onHide={onHideSubject}
                 onUnhide={onUnhideSubject}
             />
@@ -48,7 +55,7 @@
                 isActive={isSlotActive}
                 status={lessonStatus}
                 {showRemoveControls}
-                isHidden={hiddenSubjects.includes(lesson.title)}
+                isHidden={isLessonHidden(lesson.title)}
                 onHide={onHideSubject}
                 onUnhide={onUnhideSubject}
             />
@@ -65,7 +72,7 @@
                         isActive={isSlotActive}
                         status={lessonStatus}
                         {showRemoveControls}
-                        isHidden={hiddenSubjects.includes(lesson.title)}
+                        isHidden={isLessonHidden(lesson.title)}
                         onHide={onHideSubject}
                         onUnhide={onUnhideSubject}
                     />

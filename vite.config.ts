@@ -24,9 +24,18 @@ function goBackendPlugin(): Plugin {
 			const exeName = isWin ? 'server.exe' : 'server';
 			const exePath = path.join(serverDir, exeName);
 
+			// Ensure port 3001 is free and previous binary is unlocked before compiling
+			if (isWin) {
+				try {
+					execSync('taskkill /IM server.exe /F', { stdio: 'ignore' });
+				} catch {
+					// ignore
+				}
+			}
+
 			console.log('\n[Go Backend] Building local binary for development...');
 			try {
-				const envHost = { ...process.env };
+				const envHost: NodeJS.ProcessEnv = { ...process.env };
 				delete envHost.GOOS;
 				delete envHost.GOARCH;
 
@@ -40,17 +49,8 @@ function goBackendPlugin(): Plugin {
 				return;
 			}
 
-			// Ensure port 3001 is free before starting
-			if (isWin) {
-				try {
-					execSync('taskkill /IM server.exe /F', { stdio: 'ignore' });
-				} catch {
-					// ignore
-				}
-			}
-
 			console.log('[Go Backend] Starting server on http://127.0.0.1:3001...');
-			const envHost = { ...process.env };
+			const envHost: NodeJS.ProcessEnv = { ...process.env, DEV_MODE: '1' };
 			delete envHost.GOOS;
 			delete envHost.GOARCH;
 

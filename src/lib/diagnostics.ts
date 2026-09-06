@@ -31,12 +31,14 @@ export interface DiagnosticData {
 }
 
 let latestDiagnostics: DiagnosticData | null = null;
+let savedGetState: (() => Record<string, any>) | undefined;
 
 /**
  * Initializes diagnostic logging in background idle time.
  */
 export function initDiagnostics(getState?: () => Record<string, any>) {
     if (typeof window === 'undefined') return;
+    savedGetState = getState;
 
     const runWhenIdle = () => {
         if ('requestIdleCallback' in window) {
@@ -63,8 +65,25 @@ async function collectAndPrint(getState?: () => Record<string, any>) {
 
         if (typeof window !== 'undefined') {
             (window as any).__DIAGNOSTICS__ = data;
-            (window as any).__printDiagnostics = () => printReport(data);
+            (window as any).__printDiagnostics = () => collectAndPrint(savedGetState);
             (window as any).__exportDiagnostics = () => JSON.stringify(data, null, 2);
+
+            try {
+                Object.defineProperty(window, 'test', {
+                    get() {
+                        (window as any).__toggleTestMode?.();
+                        return 'Тест-режим перемкнено';
+                    },
+                    configurable: true
+                });
+                Object.defineProperty(window, 'diag', {
+                    get() {
+                        (window as any).__printDiagnostics?.();
+                        return 'Оновлення діагностики...';
+                    },
+                    configurable: true
+                });
+            } catch {}
         }
 
         printReport(data);
@@ -97,7 +116,8 @@ async function measureHttpPing(): Promise<{ pingMs: number; statusText: string; 
             const pingMs = Math.round(performance.now() - start);
 
             clearTimeout(timeoutId);
-            return { pingMs, statusText: `HTTP ${res.status}`, ok: res.ok };
+            const isOk = res.ok || res.status === 304;
+            return { pingMs, statusText: `HTTP ${res.status}`, ok: isOk };
         } catch {
             continue;
         }
@@ -146,7 +166,7 @@ async function probeBackendApi(): Promise<string> {
             cache: 'no-store'
         });
         clearTimeout(timeoutId);
-        return res.ok ? `Online (HTTP ${res.status})` : `Помилка (HTTP ${res.status})`;
+        return (res.ok || res.status === 304) ? `Online (HTTP ${res.status})` : `Помилка (HTTP ${res.status})`;
     } catch {
         return 'Офлайн (локальний Go-сервер не відповідає)';
     }
@@ -228,6 +248,21 @@ function getPingStyle(ping?: string): string {
 }
 
 /**
+ * Returns green for < 500ms, yellow for 500-1000ms, red for > 1000ms.
+ */
+function getTimingStyle(timeStr: string): string {
+    const num = parseFloat(timeStr);
+    if (isNaN(num)) return '';
+    if (num > 1000) {
+        return 'color: #dc2626; font-weight: bold;';
+    }
+    if (num >= 500) {
+        return 'color: #eab308; font-weight: bold;';
+    }
+    return 'color: #16a34a; font-weight: bold;';
+}
+
+/**
  * Clean console output without square brackets or unnecessary colors.
  * Merges Ping & Statuses into one unified table, with statuses & pings colored in green (yellow if N/A).
  */
@@ -238,9 +273,14 @@ function printReport(data: DiagnosticData) {
         'font-weight: bold;'
     );
 
-    // 1. Load Speed (Timings)
+    // 1. Load Speed (Timings) line by line with dynamic colors
     console.groupCollapsed('Швидкість завантаження');
-    console.table(data.timings);
+    for (const [name, timeStr] of Object.entries(data.timings)) {
+        console.log(
+            `${name}: %c${timeStr}`,
+            getTimingStyle(timeStr)
+        );
+    }
     console.groupEnd();
 
     // 2. Unified Statuses and Ping Table
@@ -274,8 +314,9 @@ function printReport(data: DiagnosticData) {
     console.log(`Посилання: ${data.statuses.linksCount} збережено • Оновлено: ${data.statuses.linksUpdatedAt}`);
     console.groupEnd();
 
-    // Small help tip without styling
-    console.log('Викличте window.__printDiagnostics() у консолі для оновлення даних.');
-    console.log('Викличте window.__toggleTestMode(true) у консолі для увімкнення тестового режиму.');
+    console.log(`Викличте window.__printDiagnostics() у консолі для оновлення даних.`);
+    console.log(`Викличте window.__toggleTestMode(true) у консолі для увімкнення тестового режиму.`);
 
+        const testUrl = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?test` : '?test';
+    console.log(`Посилання на тестовий режим: ${testUrl}`);
 }
