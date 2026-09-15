@@ -156,26 +156,111 @@ export async function fetchServerOnlineLinks(apiUrl = LINKS_API_URL): Promise<On
     return null;
 }
 
+const ADMIN_SESSION_TOKEN_KEY = 'kpi_admin_session_v1';
+
 /**
- * Saves links to Go backend API using admin password.
+ * Logs in admin using master password, obtaining a 24h session.
+ */
+export async function loginAdmin(password: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: password.trim() }),
+            credentials: 'include'
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            return { success: false, error: data.error || `Помилка входу (HTTP ${res.status})` };
+        }
+
+        if (data.token && typeof localStorage !== 'undefined') {
+            localStorage.setItem(ADMIN_SESSION_TOKEN_KEY, data.token);
+        }
+        return { success: true };
+    } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { success: false, error: `Не вдалося з'єднатися із сервером: ${msg}` };
+    }
+}
+
+/**
+ * Checks if client has an active admin session.
+ */
+export async function checkAdminAuth(): Promise<boolean> {
+    try {
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem(ADMIN_SESSION_TOKEN_KEY) : null;
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch('/api/auth/check', {
+            headers,
+            credentials: 'include'
+        });
+        if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            return data.authenticated === true;
+        }
+    } catch {
+        // ignore
+    }
+    return false;
+}
+
+/**
+ * Logs out admin by terminating session.
+ */
+export async function logoutAdmin(): Promise<void> {
+    try {
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem(ADMIN_SESSION_TOKEN_KEY) : null;
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers,
+            credentials: 'include'
+        });
+    } catch {
+        // ignore
+    } finally {
+        if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem(ADMIN_SESSION_TOKEN_KEY);
+        }
+    }
+}
+
+/**
+ * Saves links to Go backend API using active session.
  */
 export async function saveLinksToServer(
     links: OnlineLink[],
-    password: string,
+    password?: string,
     apiUrl = LINKS_API_URL
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem(ADMIN_SESSION_TOKEN_KEY) : null;
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+        };
+        // Use token if available, or fallback to direct password
+        const authValue = token || (password ? password.trim() : '');
+        if (authValue) {
+            headers['Authorization'] = `Bearer ${authValue}`;
+        }
+
         const res = await fetch(apiUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${password.trim()}`
-            },
+            headers,
+            credentials: 'include',
             body: JSON.stringify(links)
         });
 
         if (res.status === 401) {
-            return { success: false, error: 'Невірний пароль адміністратора' };
+            return { success: false, error: 'Потрібна авторизація. Будь ласка, увійдіть як адміністратор.' };
         }
 
         if (!res.ok) {

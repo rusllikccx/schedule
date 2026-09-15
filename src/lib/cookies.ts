@@ -126,10 +126,14 @@ export function saveShowHideControls(show: boolean): void {
 
 const ADMIN_TOKEN_KEY = 'kpi_admin_token_v1';
 
+/**
+ * @deprecated Deprecated for security: raw master passwords are no longer stored in localStorage.
+ * Automatically cleans up any legacy plaintext password from older versions.
+ */
 export function getStoredAdminPassword(): string {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         try {
-            return localStorage.getItem(ADMIN_TOKEN_KEY) || '';
+            localStorage.removeItem(ADMIN_TOKEN_KEY);
         } catch {
             // ignore
         }
@@ -137,16 +141,15 @@ export function getStoredAdminPassword(): string {
     return '';
 }
 
-export function saveStoredAdminPassword(password: string): void {
+/**
+ * @deprecated Deprecated for security: passwords are no longer stored in localStorage.
+ */
+export function saveStoredAdminPassword(_password: string): void {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         try {
-            if (password) {
-                localStorage.setItem(ADMIN_TOKEN_KEY, password);
-            } else {
-                localStorage.removeItem(ADMIN_TOKEN_KEY);
-            }
-        } catch (e) {
-            console.warn('Failed to save admin token to localStorage', e);
+            localStorage.removeItem(ADMIN_TOKEN_KEY);
+        } catch {
+            // ignore
         }
     }
 }

@@ -47,7 +47,6 @@
     // Links editing state
     let isLinksModalOpen = $state(false);
     let currentLinks = $state<OnlineLink[]>([]);
-    let adminPassword = $state('');
 
     let scheduleData = $state<ScheduleData>({
         week1: createEmptyWeekMap(),
@@ -226,9 +225,8 @@
         selectedMobileDay = d === 0 ? 1 : d;
     }
 
-    function handleSaveLinksSuccess(updatedLinks: OnlineLink[], pwd: string) {
+    function handleSaveLinksSuccess(updatedLinks: OnlineLink[]) {
         currentLinks = updatedLinks;
-        adminPassword = pwd;
         // Re-apply updated links to current scheduleData so UI reflects new links instantly
         scheduleData = applyLinksToSchedule(scheduleData);
     }
@@ -304,7 +302,7 @@
         selectedMobileDay = dayOfWeek === 0 ? 1 : dayOfWeek;
         hiddenSubjects = loadHiddenSubjects();
         showRemoveControls = loadShowHideControls();
-        adminPassword = getStoredAdminPassword();
+        getStoredAdminPassword(); // Cleans up legacy plaintext password if present
 
         // 1. Load links from local cache or JSON fallback
         currentLinks = loadCachedOnlineLinks();
@@ -568,7 +566,6 @@
         isOpen={isLinksModalOpen}
         links={currentLinks}
         {scheduleData}
-        initialPassword={adminPassword}
         onClose={() => (isLinksModalOpen = false)}
         onSaveSuccess={handleSaveLinksSuccess}
     />

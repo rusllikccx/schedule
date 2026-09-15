@@ -109,6 +109,7 @@ function goBackendPlugin(): Plugin {
 					cwd: serverDir,
 					env: {
 						...process.env,
+						CGO_ENABLED: '0',
 						GOOS: 'linux',
 						GOARCH: 'amd64'
 					},
