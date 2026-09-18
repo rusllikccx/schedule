@@ -13,7 +13,7 @@ export default (ctx) => {
 						'./src/**/*.ts'
 					],
 					defaultExtractor: (content) => {
-						return content.match(/[A-Za-z0-9-_/:]+/g) || [];
+						return content.match(/[A-Za-z0-9-_/]+/g) || [];
 					},
 					safelist: {
 						standard: [
@@ -22,6 +22,8 @@ export default (ctx) => {
 							'fade',
 							'collapse',
 							'collapsing',
+							'btn',
+							'btn-danger',
 							'btn-close',
 							'modal-backdrop',
 							'spinner-border',
@@ -34,8 +36,11 @@ export default (ctx) => {
 							'current-day-header',
 							'current-lesson-active',
 							'is-hidden',
+							'has-link',
+							'copied',
 							'time-col',
 							// Dynamic classes generated at runtime
+							/^btn-/,
 							/^btn-group/,
 							/^type-/,
 							/^status-/,
