@@ -2,22 +2,47 @@
   {
     "title": "Архітектура комп'ютерних систем",
     "lecturer": "Гальчинський",
-    "link": "https://us04web.zoom.us/j/77391435532?pwd=WeYGlLDQ0yaPGBN06ipYVxJs6OuTS1.1"
+    "link": "https://us04web.zoom.us/j/77391435532?pwd=WeYGlLDQ0yaPGBN06ipYVxJs6OuTS1.1",
+    "password": "4s1s7V"
+  },
+  {
+    "title": "Архітектура комп'ютерних систем",
+    "lecturer": "Личик",
+    "link": "https://us05web.zoom.us/j/4177321997?pwd=QXQ5VWhzdU1CM01nZ3BWSVh6d0ZQUT09"
   },
   {
     "title": "Функціональні залежності та системи",
     "lecturer": "Шумська",
-    "link": "https://us02web.zoom.us/j/2923228017?pwd=WSs4ZC8rbUE4Y0UvMTJOOVMvMlk5UT09"
+    "link": "https://us02web.zoom.us/j/2923228017?pwd=WSs4ZC8rbUE4Y0UvMTJOOVMvMlk5UT09",
+    "password": "295627"
+  },
+  {
+    "title": "Функціональні залежності та системи",
+    "lecturer": "Крюков",
+    "link": "https://us05web.zoom.us/j/2612862666?pwd=YikoxTv2OWTacEmQ30mp4LusrriEtL.1",
+    "password": "5T4M6g"
   },
   {
     "title": "Основи технологій захисту інформації",
     "lecturer": "Демчінський",
-    "link": "https://us05web.zoom.us/j/96108926162?pwd=YnkrQWRuOHR0MnhuUVo5dEVsSVo2UT09"
+    "link": "https://us05web.zoom.us/j/96108926162?pwd=YnkrQWRuOHR0MnhuUVo5dEVsSVo2UT09",
+    "password": "5kHAvk"
+  },
+  {
+    "title": "Основи технологій захисту інформації",
+    "lecturer": "Яцура",
+    "link": "https://us05web.zoom.us/j/9775464766?pwd=GZIGrnR2dvEyEbbb0bUYQ3mS7splYA.1"
   },
   {
     "title": "Бази даних та інформаційні системи",
     "lecturer": "Коломицев",
-    "link": "https://us02web.zoom.us/j/78796314863?pwd=Tll2SFBxaWFUc3JiM1d4VjNpZStTQT09"
+    "link": "https://us02web.zoom.us/j/78796314863?pwd=Tll2SFBxaWFUc3JiM1d4VjNpZStTQT09",
+    "password": "HPk167"
+  },
+  {
+    "title": "Бази даних та інформаційні системи",
+    "lecturer": "Личик",
+    "link": "https://us05web.zoom.us/j/4177321997?pwd=QXQ5VWhzdU1CM01nZ3BWSVh6d0ZQUT09"
   },
   {
     "title": "Логіка",
@@ -35,9 +60,37 @@
     "link": "https://us04web.zoom.us/j/2592042684?pwd=WVkraTNYc0tHQW1YTVdndGpHeFhtZz09"
   },
   {
+    "title": "Англійська мова",
+    "lecturer": "Гавриленко",
+    "link": "http://meet.google.com/aoy-hbrn-tdn"
+  },
+  {
     "title": "Німецька мова (рівень В1)",
     "lecturer": "Башук",
-    "link": "https://us04web.zoom.us/j/4210681284?pwd=aGVLdmtyZ0hUWTBTUmlvbkhzbGRnQT09"
+    "link": "https://us04web.zoom.us/j/4210681284?pwd=aGVLdmtyZ0hUWTBTUmlvbkhzbGRnQT09",
+    "password": "8gnU01"
+  },
+  {
+    "title": "Вступ до аналізу шкідливого програмного забезпечення",
+    "lecturer": "Ільїн",
+    "link": "https://bbb.kpi.ua/b/myk-gft-nlr-gx2",
+    "password": "867020"
+  },
+  {
+    "title": "Вступ до аналізу шкідливого програмного забезпечення",
+    "lecturer": "Войцеховський",
+    "link": "https://bbb.kpi.ua/b/uwq-ofo-gce-lhw",
+    "password": "003705"
+  },
+  {
+    "title": "Моделі рефлексії у кібербезпеці",
+    "lecturer": "Смирнов",
+    "link": "https://us02web.zoom.us/j/86188492561?pwd=1Q0FlnYIVGIxAzt1RnEgP6kMAnqNPy.1"
+  },
+  {
+    "title": "Моделі рефлексії у кібербезпеці",
+    "lecturer": "Рибак",
+    "link": "https://meet.google.com/onc-bkij-fpt"
   },
   {
     "title": "Твої гроші: фінансові рішення у повсякденному житті",
@@ -45,18 +98,19 @@
     "link": "https://us04web.zoom.us/j/9762729233?pwd=eDhGQW9SVktGb0kvODFmaVNlYXIrQT09"
   },
   {
+    "title": "Фінансово-інвестиційна діяльність",
+    "lecturer": "Антипенко",
+    "link": "https://meet.google.com/fyg-iyjb-jsd"
+  },
+  {
+    "title": "Основи звукозапису та цифрової обробки звуку",
+    "lecturer": "Чайка",
+    "link": "https://meet.google.com/xfm-dkys-ags"
+  },
+  {
     "title": "Цифровий бізнес",
     "lecturer": "Цеслів",
-    "link": "https://us04web.zoom.us/j/77245865586?pwd=PwCSmp118hRHxfA8q1M4RpJbdjQr1s.1"
-  },
-  {
-    "title": "Управління командою: результат та ефективність",
-    "lecturer": "Хлебинська",
-    "link": "https://moodle.example.com/team"
-  },
-  {
-    "title": "Вступ до аналізу шкідливого програмного забезпечення",
-    "lecturer": "Ільїн",
-    "link": "https://moodle.example.com/malware"
+    "link": "https://us04web.zoom.us/j/77245865586?pwd=PwCSmp118hRHxfA8q1M4RpJbdjQr1s.1",
+    "password": "5xns6k"
   }
 ]

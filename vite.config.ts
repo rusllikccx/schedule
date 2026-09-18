@@ -1,6 +1,7 @@
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig, type Plugin } from 'vite';
+import { type Plugin } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { spawn, execSync, type ChildProcess } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -20,6 +21,9 @@ function goBackendPlugin(): Plugin {
 		name: 'vite-plugin-go-backend',
 
 		configureServer(server) {
+			if (process.env.VITEST === 'true') {
+				return;
+			}
 			const isWin = process.platform === 'win32';
 			const exeName = isWin ? 'server.exe' : 'server';
 			const exePath = path.join(serverDir, exeName);
@@ -101,6 +105,9 @@ function goBackendPlugin(): Plugin {
 		},
 
 		closeBundle() {
+			if (process.env.VITEST === 'true') {
+				return;
+			}
 			// Runs during build. Cross-compile Go binary for Debian Linux (GOOS=linux GOARCH=amd64)
 			console.log('\n[Go Backend] Compiling Linux binary for Debian deployment (GOOS=linux GOARCH=amd64)...');
 			try {
@@ -138,6 +145,28 @@ export default defineConfig({
 			}
 		}
 	},
+	css: {
+		preprocessorOptions: {
+			scss: {
+				silenceDeprecations: ['import', 'global-builtin', 'color-functions', 'if-function']
+			}
+		}
+	},
+	test: {
+		include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'html', 'json-summary'],
+			reportsDirectory: './coverage',
+			include: ['src/lib/**/*.ts'],
+			exclude: [
+				'src/lib/**/*.test.ts',
+				'src/lib/types.ts',
+				'src/lib/index.ts',
+				'src/app.d.ts'
+			]
+		}
+	},
 	plugins: [
 		goBackendPlugin(),
 		sveltekit({
@@ -150,7 +179,7 @@ export default defineConfig({
 				pages: 'build',
 				assets: 'build',
 				fallback: '404.html',
-				precompress: false,
+				precompress: true,
 				strict: true
 			})
 		})

@@ -1,36 +1,98 @@
-import { DAYS, TIME_SLOTS } from './constants';
-import type { ScheduleData, Lesson } from './types';
+/**
+ * @fileoverview Pure domain logic for calculating real-time academic status.
+ *
+ * Computes:
+ * - Active pair in progress (title, minutes remaining, progress bar percentage).
+ * - Break between pairs (next upcoming lesson, countdown in minutes, break progress percentage).
+ * - Removed / hidden lessons status in edit mode.
+ * - End of day / weekend status.
+ */
 
-export type LiveStatusMode = 'active-pair' | 'break' | 'no-pairs' | 'removed-pair';
+import { DAYS, TIME_SLOTS } from './constants';
+import type { ScheduleData, Lesson, SlotNumber } from './types';
+
+/**
+ * Operating mode describing the current real-time situation.
+ */
+export type LiveStatusMode =
+    | 'active-pair'     // An active pair is currently ongoing
+    | 'break'           // Currently in a break between pairs or before the first pair
+    | 'no-pairs'        // No pairs scheduled, weekend, or all pairs finished
+    | 'removed-pair';   // The current time slot contains a lesson that the user explicitly hid
+
+/**
+ * Visual indicator color for the status widget and progress bar.
+ */
 export type LiveStatusColor = 'green' | 'yellow' | 'gray';
+
+/**
+ * Detailed categorization when no active lessons are in progress.
+ */
 export type NoLessonsReason = 'no-lessons-today' | 'all-finished' | null;
 
+/**
+ * Computed state model for the live status header widget.
+ */
 export interface LiveStatus {
+    /** Current operating state mode */
     mode: LiveStatusMode;
+    /** Primary status headline (e.g. subject name or "Всі пари на сьогодні завершено") */
     title: string;
+    /** Secondary detail line with time range and remaining minutes */
     subtitle: string;
+    /** Number of active pairs completed earlier today */
     passedPairs: number;
+    /** Number of active pairs remaining after the current slot/break */
     remainingPairs: number;
+    /** Total count of active (non-hidden) pairs scheduled for today */
     totalPairs: number;
+    /** Progress bar fill percentage (0 to 100) */
     percent: number;
+    /** Status theme color ('green', 'yellow', or 'gray') */
     color: LiveStatusColor;
-    targetSlot: number | null;
+    /** Target slot number to scroll to when the user clicks the status widget */
+    targetSlot: SlotNumber | null;
+    /** Day index of the target lesson (1..6) */
     targetDay: number | null;
+    /** Specific reason if no lessons are ongoing */
     noLessonsReason: NoLessonsReason;
 }
 
+/**
+ * Parameters required to compute the live status.
+ */
 export interface ComputeLiveStatusOptions {
+    /** JavaScript day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday) */
     currentDay: number;
+    /** Total minutes elapsed from midnight (e.g. `hours * 60 + minutes`) */
     currentMinutes: number;
+    /** Active academic week number (1 = odd, 2 = even) */
     actualWeek: number;
+    /** Full bi-weekly schedule data */
     scheduleData: ScheduleData;
+    /** Set of subject titles hidden by user for $O(1)$ fast lookup */
     hiddenSubjectsSet?: ReadonlySet<string>;
+    /** Fallback array of hidden subject titles */
     hiddenSubjects?: string[];
 }
 
 /**
- * Pure function to compute the live status, active/next pair, breaks,
- * and day progress based on current time and schedule.
+ * Pure calculation function that evaluates the live status, active/next pair,
+ * breaks, and day progress bar according to the current timestamp and schedule.
+ *
+ * @param options - Contextual time and schedule options.
+ * @returns Fully computed {@link LiveStatus} state object.
+ *
+ * @example
+ * ```ts
+ * const status = computeTodayLiveStatus({
+ *     currentDay: 2, // Tuesday
+ *     currentMinutes: 540, // 09:00
+ *     actualWeek: 1,
+ *     scheduleData
+ * });
+ * console.log(status.title, status.percent);
+ * ```
  */
 export function computeTodayLiveStatus({
     currentDay,
@@ -57,7 +119,7 @@ export function computeTodayLiveStatus({
         };
     }
 
-    // Fast O(1) set lookup
+    // Fast O(1) set lookup for hidden subjects
     const isHidden = (title: string): boolean => {
         if (hiddenSubjectsSet) {
             return hiddenSubjectsSet.has(title);
@@ -74,9 +136,9 @@ export function computeTodayLiveStatus({
 
     // Find pairs present today before vs after hidden filtering
     let totalActiveToday = 0;
-    const slotsWithLessons: number[] = [];
-    const slotLessonsFiltered: Record<number, Lesson[]> = {};
-    const slotLessonsRaw: Record<number, Lesson[]> = {};
+    const slotsWithLessons: SlotNumber[] = [];
+    const slotLessonsFiltered: Partial<Record<SlotNumber, Lesson[]>> = {};
+    const slotLessonsRaw: Partial<Record<SlotNumber, Lesson[]>> = {};
 
     for (const s of TIME_SLOTS) {
         const raw = rawTodaySlots[s.slot] || [];
@@ -96,7 +158,7 @@ export function computeTodayLiveStatus({
     );
 
     if (currentSlotIndex !== -1) {
-        const slot = TIME_SLOTS[currentSlotIndex];
+        const slot = TIME_SLOTS[currentSlotIndex]!;
         const filteredPairs = slotLessonsFiltered[slot.slot] || [];
         const rawPairs = slotLessonsRaw[slot.slot] || [];
 
@@ -162,14 +224,14 @@ export function computeTodayLiveStatus({
     }
 
     // Check if currently inside a break between slots
-    const firstSlot = TIME_SLOTS[0];
-    const lastSlot = TIME_SLOTS[TIME_SLOTS.length - 1];
+    const firstSlot = TIME_SLOTS[0]!;
+    const lastSlot = TIME_SLOTS[TIME_SLOTS.length - 1]!;
 
     if (currentMinutes > firstSlot.startMin && currentMinutes < lastSlot.endMin) {
         // Find the slot that just ended and the upcoming slot
         for (let i = 0; i < TIME_SLOTS.length - 1; i++) {
-            const prev = TIME_SLOTS[i];
-            const next = TIME_SLOTS[i + 1];
+            const prev = TIME_SLOTS[i]!;
+            const next = TIME_SLOTS[i + 1]!;
             if (currentMinutes > prev.endMin && currentMinutes < next.startMin) {
                 const nextFiltered = slotLessonsFiltered[next.slot] || [];
                 const nextRaw = slotLessonsRaw[next.slot] || [];
@@ -246,4 +308,3 @@ export function computeTodayLiveStatus({
         noLessonsReason: totalActiveToday === 0 ? 'no-lessons-today' : 'all-finished'
     };
 }
-

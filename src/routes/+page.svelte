@@ -1,29 +1,25 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { replaceState } from '$app/navigation';
+    import { TIME_SLOTS, DAYS } from '$lib/constants';
+    import type { ScheduleData, OnlineLink } from '$lib/types';
+    import { getActualCurrentWeek } from '$lib/utils/calendar';
+    import { createEmptyWeekMap } from '$lib/utils/transformers';
+    import { fetchSchedule, fetchServerOnlineLinks } from '$lib/services/api';
     import {
-        TIME_SLOTS,
-        DAYS,
-        getActualCurrentWeek,
-        createEmptyWeekMap,
-        fetchSchedule,
         getCachedSchedule,
         loadCachedOnlineLinks,
-        fetchServerOnlineLinks,
-        applyLinksToSchedule,
-        activeOnlineLinks,
-        type ScheduleData,
-        type OnlineLink
-    } from '$lib/schedule';
+        applyLinksToSchedule
+    } from '$lib/services/scheduleService';
     import {
         loadHiddenSubjects,
         saveHiddenSubjects,
         clearHiddenSubjects,
         loadShowHideControls,
-        saveShowHideControls,
-        getStoredAdminPassword
-    } from '$lib/cookies';
-    import LessonsCell from '$lib/components/LessonsCell.svelte';
+        saveShowHideControls
+    } from '$lib/storage';
+    import ScheduleHeader from '$lib/components/ScheduleHeader.svelte';
+    import ScheduleTable from '$lib/components/ScheduleTable.svelte';
     import EditLinksModal from '$lib/components/EditLinksModal.svelte';
     import TestTimePanel from '$lib/components/TestTimePanel.svelte';
     import { initDiagnostics } from '$lib/diagnostics';
@@ -64,8 +60,9 @@
     let activeSlot = $derived.by(() => {
         if (!isCurrentWeek) return null;
         for (let i = 0; i < TIME_SLOTS.length; i++) {
-            if (currentMinutes >= TIME_SLOTS[i].startMin && currentMinutes <= TIME_SLOTS[i].endMin) {
-                return TIME_SLOTS[i].slot;
+            const s = TIME_SLOTS[i]!;
+            if (currentMinutes >= s.startMin && currentMinutes <= s.endMin) {
+                return s.slot;
             }
         }
         return null;
@@ -79,7 +76,6 @@
         const rawTodaySlots = todayWeekMap[todayMeta.code] || {};
 
         for (const s of TIME_SLOTS) {
-            // Check slots that start in the future
             if (currentMinutes < s.startMin) {
                 const raw = rawTodaySlots[s.slot] || [];
                 const filtered = hiddenSubjects.length > 0
@@ -95,19 +91,18 @@
 
     let rawWeekData = $derived(displayedWeek === 1 ? scheduleData.week1 : scheduleData.week2);
 
-    // In edit mode (showRemoveControls = true), display all subjects so hidden ones can be seen (as gray) and restored.
-    // In normal mode, filter out hidden subjects completely.
     let currentWeekData = $derived.by(() => {
         if (showRemoveControls) {
             return rawWeekData;
         }
-        const filtered: typeof rawWeekData = {};
-        for (const dayCode of Object.keys(rawWeekData)) {
+        const filtered: typeof rawWeekData = createEmptyWeekMap();
+        for (const day of DAYS) {
+            const dayCode = day.code;
+            const rawSlots = rawWeekData[dayCode] || {};
             filtered[dayCode] = {};
-            for (const slotStr of Object.keys(rawWeekData[dayCode])) {
-                const slotNum = Number(slotStr);
-                const lessons = rawWeekData[dayCode][slotNum] || [];
-                filtered[dayCode][slotNum] = hiddenSubjects.length > 0
+            for (const s of TIME_SLOTS) {
+                const lessons = rawSlots[s.slot] || [];
+                filtered[dayCode][s.slot] = hiddenSubjects.length > 0
                     ? lessons.filter(lesson => !hiddenSubjectsSet.has(lesson.title))
                     : lessons;
             }
@@ -115,7 +110,6 @@
         return filtered;
     });
 
-    // Compute live status, active pair, break, and progress slider for today (extracted to isolated pure function)
     let todayLiveStatus = $derived(
         computeTodayLiveStatus({
             currentDay,
@@ -149,7 +143,6 @@
     }
 
     async function loadScheduleData() {
-        // Step 1: Immediate instant load from persistent cache (renders in 0ms)
         const cached = getCachedSchedule();
         if (cached) {
             scheduleData = cached;
@@ -159,10 +152,8 @@
         }
         error = null;
 
-        // Step 2: Fetch fresh data from API
         try {
             const fresh = await fetchSchedule();
-            // Deep compare with existing schedule to only trigger re-render and cache update when changed
             const currentJson = JSON.stringify(scheduleData);
             const freshJson = JSON.stringify(fresh);
             if (currentJson !== freshJson) {
@@ -170,7 +161,6 @@
             }
         } catch (err: unknown) {
             console.error('Failed to load schedule:', err);
-            // If offline or API fails, keep showing cached schedule; only show error if no cache exists
             if (!cached) {
                 error = 'Не вдалося завантажити розклад з API';
             }
@@ -227,7 +217,6 @@
 
     function handleSaveLinksSuccess(updatedLinks: OnlineLink[]) {
         currentLinks = updatedLinks;
-        // Re-apply updated links to current scheduleData so UI reflects new links instantly
         scheduleData = applyLinksToSchedule(scheduleData);
     }
 
@@ -245,23 +234,6 @@
     let highlightedCellKey = $state<string | null>(null);
     let highlightTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    function scrollOnHighlight(node: HTMLElement, isTarget: boolean) {
-        if (isTarget) {
-            setTimeout(() => {
-                node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-            }, 30);
-        }
-        return {
-            update(newIsTarget: boolean) {
-                if (newIsTarget) {
-                    setTimeout(() => {
-                        node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                    }, 30);
-                }
-            }
-        };
-    }
-
     function scrollToAndHighlightLesson(week: number, day: number, slot: number) {
         const key = `cell-w${week}-${day}-${slot}`;
         highlightedCellKey = key;
@@ -275,7 +247,6 @@
         const status = todayLiveStatus;
 
         if (status.targetSlot && status.targetDay) {
-            // Point to the lesson!
             if (displayedWeek !== actualWeek) {
                 displayedWeek = actualWeek;
             }
@@ -286,7 +257,6 @@
             return;
         }
 
-        // If no lessons to point to, show appropriate toast
         if (status.noLessonsReason === 'all-finished') {
             showToast('Всі пари на сьогодні завершено');
         } else {
@@ -302,35 +272,27 @@
         selectedMobileDay = dayOfWeek === 0 ? 1 : dayOfWeek;
         hiddenSubjects = loadHiddenSubjects();
         showRemoveControls = loadShowHideControls();
-        getStoredAdminPassword(); // Cleans up legacy plaintext password if present
 
-        // 1. Load links from local cache or JSON fallback
         currentLinks = loadCachedOnlineLinks();
+        void loadScheduleData();
 
-        // 2. Load schedule
-        loadScheduleData();
-
-        // 3. Fetch latest server links in background and re-apply if updated
-        fetchServerOnlineLinks().then(serverLinks => {
+        void fetchServerOnlineLinks().then(serverLinks => {
             if (serverLinks) {
                 currentLinks = serverLinks;
                 scheduleData = applyLinksToSchedule(scheduleData);
             }
         });
 
-        // 4. Initialize zero-overhead background diagnostics in console
         initDiagnostics(() => ({
             hiddenSubjectsCount: hiddenSubjects.length,
             linksCount: currentLinks.length
         }));
 
-        // 5. Open test mode if ?test is present in the URL
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('test')) {
             handleToggleTestMode(true);
         }
 
-        // 6. Expose window.__toggleTestMode for developer console access
         window.__toggleTestMode = (forced?: boolean) => {
             const next = typeof forced === 'boolean' ? forced : !isTestMode;
             handleToggleTestMode(next);
@@ -349,218 +311,50 @@
 </script>
 
 <div class="container-fluid px-2 px-md-4">
-    <header class="d-flex flex-column align-items-center mb-3">
-        <h1 class="main-title fw-bold mb-2 text-center">Розклад занять</h1>
-
-        <!-- Time & Day Simulation Test Panel (Visible ONLY in test mode) -->
-        {#if isTestMode}
-            <div class="w-100 mb-2">
-                <TestTimePanel
-                    {isTestMode}
-                    {testDate}
-                    onToggleTestMode={handleToggleTestMode}
-                    onSetTestDate={handleSetTestDate}
-                    onResetToRealTime={handleResetToRealTime}
-                />
-            </div>
-        {/if}
-
-        <div class="header-toolbar w-100 mb-2">
-            <div class="header-left-actions d-flex align-items-center gap-2">
-                <button
-                    type="button"
-                    id="toggle-remove-btn"
-                    class="btn btn-sm px-3 py-2 fw-semibold shadow-sm"
-                    class:btn-outline-secondary={!showRemoveControls}
-                    class:btn-danger={showRemoveControls}
-                    onclick={toggleRemoveControls}
-                    title={showRemoveControls ? 'Приховати хрестики видалення' : 'Показати хрестики для приховування занять'}
-                >
-                    {showRemoveControls ? '✕ Вимкнути видалення' : '✎ Редагувати розклад'}
-                </button>
-
-                {#if showRemoveControls && hiddenSubjects.length > 0}
-                    <button
-                        type="button"
-                        id="reset-hidden-btn"
-                        class="btn btn-outline-danger btn-sm px-2 px-md-3 py-2 fw-semibold shadow-sm"
-                        onclick={resetHiddenSubjects}
-                        title="Повернути всі приховані заняття ({hiddenSubjects.length})"
-                    >
-                        <span class="d-none d-md-inline">Повернути приховані ({hiddenSubjects.length})</span>
-                        <span class="d-inline d-md-none">↺</span>
-                    </button>
-                {/if}
-
-                {#if showRemoveControls}
-                    <button
-                        type="button"
-                        id="edit-links-btn"
-                        class="btn btn-outline-primary btn-sm px-2 px-md-3 py-2 fw-semibold shadow-sm"
-                        onclick={() => (isLinksModalOpen = true)}
-                        title="Редагувати посилання на онлайн-пари"
-                    >
-                        <span class="d-none d-md-inline">🔗 Посилання</span>
-                        <span class="d-inline d-md-none">🔗</span>
-                    </button>
-                {/if}
-            </div>
-
-            <div class="header-center-actions d-flex justify-content-center">
-                <div class="btn-group shadow-sm" role="group" id="week-selector">
-                    <button
-                        type="button"
-                        class="btn btn-outline-primary px-3 px-md-4 py-2 fw-semibold"
-                        class:active={displayedWeek === 1}
-                        onclick={() => (displayedWeek = 1)}
-                    >
-                        Непарний
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-outline-primary px-3 px-md-4 py-2 fw-semibold"
-                        class:active={displayedWeek === 2}
-                        onclick={() => (displayedWeek = 2)}
-                    >
-                        Парний
-                    </button>
-                </div>
-            </div>
-
-            <div class="header-right-action">
-                <!-- Live Status & Progress Slider (clickable) -->
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <div
-                    class="live-status-card status-{todayLiveStatus.color}"
-                    role="button"
-                    tabindex="0"
-                    onclick={handleLiveStatusClick}
-                    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLiveStatusClick(); } }}
-                    title={todayLiveStatus.targetSlot
-                        ? (todayLiveStatus.mode === 'active-pair' ? 'Натисніть, щоб перейти до поточної пари' : 'Натисніть, щоб перейти до наступної пари')
-                        : (todayLiveStatus.noLessonsReason === 'all-finished' ? 'Всі пари на сьогодні завершено' : 'Сьогодні немає пар')}
-                >
-                    <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
-                        <div class="d-flex align-items-center gap-1 text-truncate">
-                            <span class="status-indicator"></span>
-                            <span class="status-title fw-bold text-truncate">{todayLiveStatus.title}</span>
-                        </div>
-                        <div class="status-stats text-muted small text-nowrap">
-                            <span class="badge-count">Пройшло: <strong>{todayLiveStatus.passedPairs}</strong></span>
-                            <span class="mx-1">•</span>
-                            <span class="badge-count">Залишилось: <strong>{todayLiveStatus.remainingPairs}</strong></span>
-                        </div>
-                    </div>
-
-                    {#if todayLiveStatus.subtitle}
-                        <div class="status-time text-muted small text-truncate mb-1">{todayLiveStatus.subtitle}</div>
-                    {/if}
-
-                    <div class="live-progress-track" role="progressbar" aria-valuenow={todayLiveStatus.percent} aria-valuemin="0" aria-valuemax="100">
-                        <div
-                            class="live-progress-bar progress-{todayLiveStatus.color}"
-                            style="width: {todayLiveStatus.percent}%;"
-                        ></div>
-                    </div>
-                </div>
-            </div>
+    {#if isTestMode}
+        <div class="w-100 mb-2">
+            <TestTimePanel
+                {isTestMode}
+                {testDate}
+                onToggleTestMode={handleToggleTestMode}
+                onSetTestDate={handleSetTestDate}
+                onResetToRealTime={handleResetToRealTime}
+            />
         </div>
+    {/if}
 
-        <div
-            class="btn-group w-100 shadow-sm d-md-none overflow-auto mt-1"
-            role="group"
-            id="mobile-day-buttons"
-        >
-            {#each DAYS as day}
-                <button
-                    type="button"
-                    class="btn fw-semibold flex-fill"
-                    class:btn-primary={selectedMobileDay === day.num}
-                    class:active={selectedMobileDay === day.num}
-                    class:btn-outline-secondary={selectedMobileDay !== day.num}
-                    onclick={() => (selectedMobileDay = day.num)}
-                >
-                    {day.shortName}
-                </button>
-            {/each}
-        </div>
-    </header>
+    <ScheduleHeader
+        {displayedWeek}
+        {selectedMobileDay}
+        {showRemoveControls}
+        hiddenCount={hiddenSubjects.length}
+        {todayLiveStatus}
+        onToggleWeek={(w) => (displayedWeek = w)}
+        onSelectMobileDay={(d) => (selectedMobileDay = d)}
+        onToggleRemoveControls={toggleRemoveControls}
+        onResetHidden={resetHiddenSubjects}
+        onOpenLinksModal={() => (isLinksModalOpen = true)}
+        onLiveStatusClick={handleLiveStatusClick}
+    />
 
-    <main class="table-responsive">
-        <table class="table schedule-table">
-            <thead>
-                <tr>
-                    <th class="time-col">Час</th>
-                    {#each DAYS as day}
-                        <th
-                            data-day={day.num}
-                            class:current-day-header={isCurrentWeek && currentDay === day.num}
-                            class:mobile-active-day={selectedMobileDay === day.num}
-                        >
-                            {day.fullName}
-                        </th>
-                    {/each}
-                </tr>
-            </thead>
-            <tbody id="schedule-body">
-                {#if loading}
-                    <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">
-                            Завантаження розкладу...
-                        </td>
-                    </tr>
-                {:else if error}
-                    <tr>
-                        <td colspan="7" class="text-center py-4 text-danger">
-                            {error}
-                        </td>
-                    </tr>
-                {:else}
-                    {#each TIME_SLOTS as slot}
-                        <tr>
-                            <td class="time-col">
-                                {slot.start}<br /><small class="text-muted">{slot.end}</small>
-                            </td>
-                            {#each DAYS as day}
-                                {@const lessons = currentWeekData[day.code]?.[slot.slot] || []}
-                                {@const isTodayCell = isCurrentWeek && currentDay === day.num}
-                                {@const slotStatus = isTodayCell
-                                    ? (activeSlot === slot.slot
-                                        ? 'current'
-                                        : (nextActiveSlot === slot.slot
-                                            ? 'next'
-                                            : (currentMinutes > slot.endMin ? 'ended' : null)))
-                                    : null}
-                                {@const cellKey = `cell-w${displayedWeek}-${day.num}-${slot.slot}`}
-                                {@const isHighlighted = highlightedCellKey === cellKey}
-                                <td
-                                    id={cellKey}
-                                    data-day={day.num}
-                                    data-slot={slot.slot}
-                                    class:current-day-cell={isTodayCell}
-                                    class:mobile-active-day={selectedMobileDay === day.num}
-                                    class:highlight-pointed-lesson={isHighlighted}
-                                    use:scrollOnHighlight={isHighlighted}
-                                >
-                                    <LessonsCell
-                                        {lessons}
-                                        isSlotActive={isTodayCell && activeSlot === slot.slot}
-                                        lessonStatus={slotStatus}
-                                        cellId="toggle-w{displayedWeek}-{day.num}-{slot.slot}"
-                                        {showRemoveControls}
-                                        {hiddenSubjects}
-                                        {hiddenSubjectsSet}
-                                        onHideSubject={hideSubject}
-                                        onUnhideSubject={unhideSubject}
-                                    />
-                                </td>
-                            {/each}
-                        </tr>
-                    {/each}
-                {/if}
-            </tbody>
-        </table>
-    </main>
+    <ScheduleTable
+        {loading}
+        {error}
+        {displayedWeek}
+        {isCurrentWeek}
+        {currentDay}
+        {currentMinutes}
+        {activeSlot}
+        {nextActiveSlot}
+        {selectedMobileDay}
+        {currentWeekData}
+        {highlightedCellKey}
+        {showRemoveControls}
+        {hiddenSubjects}
+        {hiddenSubjectsSet}
+        onHideSubject={hideSubject}
+        onUnhideSubject={unhideSubject}
+    />
 
     <EditLinksModal
         isOpen={isLinksModalOpen}
@@ -570,7 +364,6 @@
         onSaveSuccess={handleSaveLinksSuccess}
     />
 
-    <!-- Toast Notification -->
     {#if toastMessage}
         <div class="schedule-toast-container" role="status" aria-live="polite">
             <div class="schedule-toast shadow-lg">

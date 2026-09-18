@@ -1,5 +1,5 @@
 <script lang="ts">
-	import 'bootstrap/dist/css/bootstrap.min.css';
+	import '../styles/bootstrap-custom.scss';
 	import '../app.css';
 
 	let { children } = $props();

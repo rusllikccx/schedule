@@ -1,22 +1,31 @@
-import { API_URL } from './constants';
-import { getLinksUpdatedAt, getScheduleUpdatedAt } from './schedule';
-
 /**
- * Client-side performance & diagnostic logger.
- * Executes in background idle time via `requestIdleCallback` with zero load overhead.
- * Strictly focused on:
- * 1. Load Speed (Navigation Timings)
- * 2. Ping & Statuses (KPI Schedule API, Go Backend API, Network, Schedule)
+ * @fileoverview Zero-overhead diagnostic performance and network health monitor.
+ *
+ * Runs strictly during idle browser time via `requestIdleCallback`.
+ * Measures:
+ * 1. Navigation Timing Metrics (DNS, TCP handshake, TTFB, DOM Interactive, DOM Complete, Total Page Load).
+ * 2. Parallel network and latency probes (Origin HTTP ping, KPI Campus API ping, Go Backend ping, Network RTT).
+ * 3. Schedule and online meeting link cache freshness timestamps.
+ * 4. Outputs a styled, organized console diagnostic dashboard for developers.
  */
 
+import { API_URL } from './constants';
+import { getLinksUpdatedAt, getScheduleUpdatedAt } from './services/scheduleService';
+
+/**
+ * Diagnostic metrics snapshot payload.
+ */
 export interface DiagnosticData {
+    /** Navigation and page load timing breakdown in milliseconds */
     timings: Record<string, string>;
+    /** Latency and ping metrics for network and remote APIs */
     ping: {
         serverPing: string;
         kpiApiPing?: string;
         networkRtt?: string;
         connectionType?: string;
     };
+    /** Operational status indicators for network, Campus API, Go backend, and cached datasets */
     statuses: {
         network: string;
         kpiScheduleApi: string;
@@ -26,28 +35,43 @@ export interface DiagnosticData {
         linksUpdatedAt: string;
         linksCount: number;
     };
+    /** Localized timestamp when the report was captured */
     timestamp: string;
+    /** Build environment mode ('Development' or 'Production') */
     mode: 'Development' | 'Production';
 }
 
+/**
+ * State object passed to diagnostics logger.
+ */
+export interface DiagnosticsState {
+    /** Current number of user-hidden subjects */
+    hiddenSubjectsCount?: number;
+    /** Current number of active online meeting links */
+    linksCount?: number;
+}
+
 let latestDiagnostics: DiagnosticData | null = null;
-let savedGetState: (() => Record<string, any>) | undefined;
+let savedGetState: (() => DiagnosticsState) | undefined;
 
 /**
- * Initializes diagnostic logging in background idle time.
+ * Initializes the background diagnostic collector during browser idle periods.
+ * Attaches global developer helper commands (`window.__printDiagnostics()`, `window.test`, `window.diag`).
+ *
+ * @param getState - Optional state callback providing live counts.
  */
-export function initDiagnostics(getState?: () => Record<string, any>) {
+export function initDiagnostics(getState?: () => DiagnosticsState): void {
     if (typeof window === 'undefined') return;
     savedGetState = getState;
 
     const runWhenIdle = () => {
-        if ('requestIdleCallback' in window) {
-            (window as any).requestIdleCallback(
-                () => collectAndPrint(getState),
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(
+                () => { void collectAndPrint(getState); },
                 { timeout: 2000 }
             );
         } else {
-            setTimeout(() => collectAndPrint(getState), 500);
+            setTimeout(() => { void collectAndPrint(getState); }, 500);
         }
     };
 
@@ -58,32 +82,37 @@ export function initDiagnostics(getState?: () => Record<string, any>) {
     }
 }
 
-async function collectAndPrint(getState?: () => Record<string, any>) {
+/**
+ * Gathers performance data and prints the formatted dashboard to the browser console.
+ */
+async function collectAndPrint(getState?: () => DiagnosticsState): Promise<void> {
     try {
         const data = await gatherData(getState);
         latestDiagnostics = data;
 
         if (typeof window !== 'undefined') {
-            (window as any).__DIAGNOSTICS__ = data;
-            (window as any).__printDiagnostics = () => collectAndPrint(savedGetState);
-            (window as any).__exportDiagnostics = () => JSON.stringify(data, null, 2);
+            window.__DIAGNOSTICS__ = data;
+            window.__printDiagnostics = () => { void collectAndPrint(savedGetState); };
+            window.__exportDiagnostics = () => JSON.stringify(data, null, 2);
 
             try {
                 Object.defineProperty(window, 'test', {
                     get() {
-                        (window as any).__toggleTestMode?.();
+                        window.__toggleTestMode?.();
                         return 'Тест-режим перемкнено';
                     },
                     configurable: true
                 });
                 Object.defineProperty(window, 'diag', {
                     get() {
-                        (window as any).__printDiagnostics?.();
+                        window.__printDiagnostics?.();
                         return 'Оновлення діагностики...';
                     },
                     configurable: true
                 });
-            } catch {}
+            } catch {
+                // ignore
+            }
         }
 
         printReport(data);
@@ -93,7 +122,7 @@ async function collectAndPrint(getState?: () => Record<string, any>) {
 }
 
 /**
- * Accurately measures HTTP round-trip ping to the host origin/server.
+ * Measures round-trip HTTP ping to the host origin using `HEAD` requests.
  */
 async function measureHttpPing(): Promise<{ pingMs: number; statusText: string; ok: boolean }> {
     const endpoints = [
@@ -127,7 +156,7 @@ async function measureHttpPing(): Promise<{ pingMs: number; statusText: string; 
 }
 
 /**
- * Probes the official KPI Schedule API.
+ * Probes the official KPI Schedule API to verify connectivity and measure latency.
  */
 async function probeKpiScheduleApi(): Promise<{ status: string; pingMs: number }> {
     try {
@@ -155,7 +184,7 @@ async function probeKpiScheduleApi(): Promise<{ status: string; pingMs: number }
 }
 
 /**
- * Probes the Go backend API (/api/links).
+ * Probes the local Go backend API (`/api/links`) for availability.
  */
 async function probeBackendApi(): Promise<string> {
     try {
@@ -172,14 +201,17 @@ async function probeBackendApi(): Promise<string> {
     }
 }
 
-async function gatherData(getState?: () => Record<string, any>): Promise<DiagnosticData> {
+/**
+ * Collects Navigation Timing metrics and executes parallel network probes.
+ */
+async function gatherData(getState?: () => DiagnosticsState): Promise<DiagnosticData> {
     const isDev = import.meta.env.DEV;
 
     // 1. Page load timings (Navigation Timing API)
     const timings: Record<string, string> = {};
     const navEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
     if (navEntries.length > 0) {
-        const nav = navEntries[0];
+        const nav = navEntries[0]!;
         timings['DNS Lookup'] = `${Math.round(nav.domainLookupEnd - nav.domainLookupStart)} ms`;
         timings['TCP Handshake'] = `${Math.round(nav.connectEnd - nav.connectStart)} ms`;
         timings['TTFB (Time to First Byte)'] = `${Math.round(nav.responseStart - nav.requestStart)} ms`;
@@ -198,7 +230,7 @@ async function gatherData(getState?: () => Record<string, any>): Promise<Diagnos
         probeBackendApi()
     ]);
 
-    const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const networkRtt = conn?.rtt ? `${conn.rtt} ms` : undefined;
     const connectionType = conn?.effectiveType ? String(conn.effectiveType).toUpperCase() : undefined;
 
@@ -238,7 +270,7 @@ async function gatherData(getState?: () => Record<string, any>): Promise<Diagnos
 }
 
 /**
- * Returns green for valid ping and yellow for N/A or unavailable ping.
+ * Returns dynamic color style for ping values (green for available, yellow for N/A).
  */
 function getPingStyle(ping?: string): string {
     if (!ping || ping === 'N/A' || ping === 'Н/Д' || ping === '-' || ping.includes('Недоступно')) {
@@ -248,7 +280,7 @@ function getPingStyle(ping?: string): string {
 }
 
 /**
- * Returns green for < 500ms, yellow for 500-1000ms, red for > 1000ms.
+ * Returns dynamic color style for timing metrics (green < 500ms, yellow < 1000ms, red > 1000ms).
  */
 function getTimingStyle(timeStr: string): string {
     const num = parseFloat(timeStr);
@@ -263,10 +295,9 @@ function getTimingStyle(timeStr: string): string {
 }
 
 /**
- * Clean console output without square brackets or unnecessary colors.
- * Merges Ping & Statuses into one unified table, with statuses & pings colored in green (yellow if N/A).
+ * Outputs structured, color-coded diagnostic logs into the browser console.
  */
-function printReport(data: DiagnosticData) {
+function printReport(data: DiagnosticData): void {
     // Header
     console.log(
         `%c${data.mode} ${data.timestamp}`,
@@ -290,8 +321,6 @@ function printReport(data: DiagnosticData) {
     const kpiPing = data.ping.kpiApiPing || 'N/A';
     const serverPing = data.ping.serverPing || 'N/A';
 
-
-    // Highlighted lines with green statuses & green (or yellow if N/A) pings
     console.log(
         `Мережа: %c${data.statuses.network}%c • RTT: %c${networkPing}`,
         data.statuses.network === 'Online' ? 'color: #16a34a; font-weight: bold;' : 'color: #dc2626; font-weight: bold;',
@@ -317,6 +346,6 @@ function printReport(data: DiagnosticData) {
     console.log(`Викличте window.__printDiagnostics() у консолі для оновлення даних.`);
     console.log(`Викличте window.__toggleTestMode(true) у консолі для увімкнення тестового режиму.`);
 
-        const testUrl = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?test` : '?test';
+    const testUrl = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?test` : '?test';
     console.log(`Посилання на тестовий режим: ${testUrl}`);
 }

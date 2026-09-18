@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { DAYS, TIME_SLOTS, getActualCurrentWeek } from '$lib/schedule';
+    import { DAYS, TIME_SLOTS } from '$lib/constants';
+    import { getActualCurrentWeek } from '$lib/utils/calendar';
 
     interface Props {
         isTestMode: boolean;
@@ -43,8 +44,10 @@
 
     function handleTimeChange(e: Event) {
         const target = e.target as HTMLInputElement;
-        const [h, m] = target.value.split(':').map(Number);
-        if (!isNaN(h) && !isNaN(m)) {
+        const parts = target.value.split(':').map(Number);
+        const h = parts[0];
+        const m = parts[1];
+        if (h !== undefined && m !== undefined && !isNaN(h) && !isNaN(m)) {
             const newDate = new Date(testDate);
             newDate.setHours(h, m, 0, 0);
             onSetTestDate(newDate);
@@ -212,4 +215,62 @@
         </div>
     {/if}
 </div>
+
+<style>
+    .test-panel-wrapper {
+        background-color: #ffffff;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 6px 12px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .test-panel-wrapper.is-active {
+        background-color: #fefce8;
+        border: 1px solid #facc15;
+        box-shadow: 0 2px 10px rgba(234, 179, 8, 0.15) !important;
+    }
+
+    .test-badge {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #475569;
+        letter-spacing: -0.01em;
+    }
+
+    .test-panel-wrapper.is-active .test-badge {
+        color: #854d0e;
+    }
+
+    .test-current-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #854d0e;
+        background-color: #fef08a;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .test-btn-sm {
+        font-size: 0.72rem;
+        padding-top: 1px !important;
+        padding-bottom: 1px !important;
+    }
+
+    .test-toggle-btn {
+        font-size: 0.75rem;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+
+    .test-panel-body {
+        background-color: transparent;
+        padding-top: 8px !important;
+    }
+
+    .quick-presets .btn {
+        font-size: 0.72rem;
+    }
+</style>
 

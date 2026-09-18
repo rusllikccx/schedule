@@ -7,6 +7,7 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
+coverage/
 
 # OS
 .DS_Store
@@ -36,3 +37,6 @@ build/schedule-api
 # Local tools & agents
 .agents
 fix.bat
+
+# Experiments
+exp/

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Lesson } from '$lib/schedule';
+    import type { Lesson } from '$lib/types';
     import LessonCard from './LessonCard.svelte';
 
     interface Props {

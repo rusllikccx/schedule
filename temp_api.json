@@ -1,0 +1,942 @@
+{
+  "groupCode": "5598",
+  "scheduleFirstWeek": [
+    {
+      "day": "Пн",
+      "pairs": [
+        {
+          "lecturer": {
+            "id": "8beb88837f3336460b62870d593f9e4a7f18f69da7aedf182e7aea52d06cf85d",
+            "name": "Крюков Владислав Ігорович"
+          },
+          "type": "Прак",
+          "time": "08:30:00",
+          "name": "Функціональні залежності та системи",
+          "location": {
+            "uri": "https://kpi.ua/k-7",
+            "title": "7-114"
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "621cb5d0bdea9584dc9f7ede1479e7cca67f8d9778d7e3c8c5cb8aa9eaef47ef",
+            "name": "Гавриленко Катерина Миколаївна"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Англійська мова професійного спрямування",
+          "location": {
+            "uri": "https://kpi.ua/k-11",
+            "title": "11-204"
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "99f814e8c1f5ba2d7fc79e815fae15835db85419e9f27e2389b0faf6112256b8",
+            "name": "Войцеховський Андрій Валерійович"
+          },
+          "type": "Лаб",
+          "time": "12:20:00",
+          "name": "Вступ до аналізу шкідливого програмного забезпечення",
+          "location": {
+            "uri": "https://kpi.ua/k-11",
+            "title": "11-312"
+          },
+          "tag": "lab",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "a4f3f94d22deec7a1e23e24d5593d8060a55eb55d81008a2feff9b0ca9955a89",
+            "name": "Яцура Павло Павлович"
+          },
+          "type": "Прак",
+          "time": "14:15:00",
+          "name": "Основи технологій захисту інформації",
+          "location": {
+            "uri": "https://kpi.ua/k-7",
+            "title": "7-116"
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "28722f23de9d9fa04b597ed17f8cd4a19a909a2a27cdc81b2d043f9a3a2ffd19",
+            "name": "Личик Владислав Васильович"
+          },
+          "type": "Лаб",
+          "time": "16:10:00",
+          "name": "Архітектура комп'ютерних систем",
+          "location": {
+            "uri": "https://kpi.ua/k-13",
+            "title": "13-37"
+          },
+          "tag": "lab",
+          "dates": []
+        }
+      ]
+    },
+    {
+      "day": "Вв",
+      "pairs": [
+        {
+          "lecturer": {
+            "id": "36c1cc2f9d7022bf6beacb6248a89e7e677b3bf9a91e6457a5ffdbade55b76da",
+            "name": "Гальчинський Леонід Юрійович"
+          },
+          "type": "Лек",
+          "time": "08:30:00",
+          "name": "Архітектура комп'ютерних систем",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "998c225a0b7bc4a581e8d523567f7e23f66cf7861d0c5ecdef8acb0c911ae880",
+            "name": "Шумська Алла Антонівна"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Функціональні залежності та системи",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "9cf1f1e60284e64e88b8371b70df7b686a71219ce68772b652cea677718110c6",
+            "name": "Демчінський Володимир Васильович"
+          },
+          "type": "Лек",
+          "time": "12:20:00",
+          "name": "Основи технологій захисту інформації",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "a1271642c26ded1a08fc67a7791aa368ec32e76940cf6f15e779d091f31439fb",
+            "name": "Коломицев Михайло Володимирович"
+          },
+          "type": "Лек",
+          "time": "14:15:00",
+          "name": "Бази даних та інформаційні системи",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        }
+      ]
+    },
+    {
+      "day": "Ср",
+      "pairs": [
+        {
+          "lecturer": {
+            "id": "fff6d685ea1aa528de7bd7f926cfec6a58583fc946e3ce71a6411f6cc09a7a96",
+            "name": "Казаков Мстислав Андрійович"
+          },
+          "type": "Лек",
+          "time": "08:30:00",
+          "name": "Етика штучного інтелекту",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "eb4ea223b35e735ca33a4d684bad98db1af36b218126cd3ab47c69c85735369c",
+            "name": "Потіщук Ольга Олегівна"
+          },
+          "type": "Лек",
+          "time": "08:30:00",
+          "name": "Логіка",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "c7ce483fd1cc5fd498e7e2a09851c65f89a33a6837f66d9fbb36e5e5f70b41a2",
+            "name": "Гаврилова Наталія Євгенівна"
+          },
+          "type": "Прак",
+          "time": "08:30:00",
+          "name": "Складно-координаційні види спорту: спортивна секція з фітнес-міксу (шейпінгу, пілатесу, аеробіки, скіпінгу, стретчингу)",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "fff6d685ea1aa528de7bd7f926cfec6a58583fc946e3ce71a6411f6cc09a7a96",
+            "name": "Казаков Мстислав Андрійович"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Logic",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "bffb5fb92a47fe78c6f42919f17fb950f38d824de5cc5565d9f2c24ed08cae2f",
+            "name": "Саламаха Олександр Євгенович"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Єдиноборства: спортивна секція з таеквон-до, карате, кікбоксингу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "ae705b6c2f40c6668a32a6169263128c213a269983ca0ee47630483fa1ad93b3",
+            "name": "Шишацька Валентина Іванівна"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Ігрові види спорту: спортивна секція з тенісу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "a898a8776c1b93c5718bf0d1c5f4e90fc60d7bc54c8699bc676cf9f60ce2aec9",
+            "name": "Чайковська Олена Юріївна"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Німецька мова (рівень А1)",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "a512db2741cd20693e4b16f19891e72b9ff12cead72761fc5e92d2aaf34740c1",
+            "name": "Башук Наталія Петрівна"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Німецька мова (рівень В1)",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "254b8075451cb29a64670c31e4c502d8b15ea3d6826e39e938de5f520474d61d",
+            "name": "Чайка Олександр Сергійович"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Основи звукозапису та цифрової обробки звуку",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "da3270018b712b8a4b1841f92c26ff067a088a391dc6031610e6300ee261df15",
+            "name": "Корюкаєв Микола Миколайович"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Спортивні секції (за видами спорту). Силові види спорту. Атлетизм – силовий тренінг",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "4cc3d9cba4633096fadf09ea1106b4b321ab81b1d461c3d6994f0e303f631249",
+            "name": "Голюк Вікторія Ярославівна"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Твої гроші: фінансові рішення у повсякденному житті",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "c08ee2a296e9cc80f185cf84596b17f6dc4e29df05c403f2b0fb077876289cb8",
+            "name": "Кузнєцова Катерина Олександрівна"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Управління брендом: від ідеї до ринку",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "dd9b860b3c3156cc68dd9f889e8778cf5251c654c87534860ea372b2c980c127",
+            "name": "Хлебинська Олександра Ігорівна"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Управління командою: результат та ефективність",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "9a9f9b7a0aef308b169aef3c3cde020cb8003fac82753b8e8dadda270bf9e7a8",
+            "name": "Антипенко Надія Василівна"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Фінансово-інвестиційна діяльність",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "529faed5f67da7f6bbd6d69f20dfea73ec00d1dbe324dcc2ee4e9f197dcf0a61",
+            "name": "Цеслів Ольга Володимирівна"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Цифровий бізнес",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "5851509ad05f0a2b0bb2264315d5c084d056dc9bfff203a9eac68dac2793af4d",
+            "name": "Новікова Ірина Василівна"
+          },
+          "type": "Прак",
+          "time": "12:20:00",
+          "name": "Ігрові види спорту: спортивна секція з настільного тенісу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "9a9f9b7a0aef308b169aef3c3cde020cb8003fac82753b8e8dadda270bf9e7a8",
+            "name": "Антипенко Надія Василівна"
+          },
+          "type": "Прак",
+          "time": "12:20:00",
+          "name": "Фінансово-інвестиційна діяльність",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "7688b6ef52555962d008fff894223582c484517cea7da49ee67800adc7fc8866",
+            "name": "Анікеєнко Лариса Василівна"
+          },
+          "type": "Прак",
+          "time": "14:15:00",
+          "name": "Ігрові види спорту: спортивна секція з волейболу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "0b9dad0346d25b6b714b7968f17315576e0e137d9b1681c7efce724442d585ca",
+            "name": "Сторожик Марина Іванівна"
+          },
+          "type": "Прак",
+          "time": "14:15:00",
+          "name": "Логіка",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "8bba5b9b846fd63c473e4c284ebea467e0b1809a389dd8998c95cab8d0ce8699",
+            "name": "Сога Сергій Михайлович"
+          },
+          "type": "Прак",
+          "time": "14:15:00",
+          "name": "Складно-координаційні види спорту: спортивна секція з туризму і скелелазіння",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "e0f1d28eabdbaab649162f1275bfe00e50dbf549e200148aca0eb2f0178074db",
+            "name": "Назимок Віктор Васильович"
+          },
+          "type": "Прак",
+          "time": "16:10:00",
+          "name": "Єдиноборства: спортивна секція з боксу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "aedec0d0ca66f380aed5fa5634c513c1bdfedc50ff2d734104809ddbc8b82295",
+            "name": "Ільїн Микола Іванович"
+          },
+          "type": "Лек",
+          "time": "18:05:00",
+          "name": "Вступ до аналізу шкідливого програмного забезпечення",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        }
+      ]
+    },
+    {
+      "day": "Чт",
+      "pairs": []
+    },
+    {
+      "day": "Пт",
+      "pairs": [
+        {
+          "lecturer": {
+            "id": "28722f23de9d9fa04b597ed17f8cd4a19a909a2a27cdc81b2d043f9a3a2ffd19",
+            "name": "Личик Владислав Васильович"
+          },
+          "type": "Лаб",
+          "time": "08:30:00",
+          "name": "Бази даних та інформаційні системи",
+          "location": {
+            "uri": "https://kpi.ua/k-13",
+            "title": "13-37"
+          },
+          "tag": "lab",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "621cb5d0bdea9584dc9f7ede1479e7cca67f8d9778d7e3c8c5cb8aa9eaef47ef",
+            "name": "Гавриленко Катерина Миколаївна"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Англійська мова професійного спрямування",
+          "location": {
+            "uri": "https://kpi.ua/k-1",
+            "title": "1-197а"
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "3a1e774a8ea4f3f402fb14450653c20d4643489b3bd77e8cc22690b879a41635",
+            "name": "Смирнов Сергій Анатолійович"
+          },
+          "type": "Лек",
+          "time": "12:20:00",
+          "name": "Моделі рефлексії у кібербезпеці",
+          "location": {
+            "uri": "https://kpi.ua/k-7",
+            "title": "7-107"
+          },
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "01ec3d27560e00b678b8ea3afd7c9279919d3cf28eb4ec2bf640c8ecf7629ccc",
+            "name": "Рибак Олександр Владиславович"
+          },
+          "type": "Прак",
+          "time": "16:10:00",
+          "name": "Моделі рефлексії у кібербезпеці",
+          "location": {
+            "uri": "https://kpi.ua/k-11",
+            "title": "11-203"
+          },
+          "tag": "prac",
+          "dates": []
+        }
+      ]
+    },
+    {
+      "day": "Сб",
+      "pairs": []
+    }
+  ],
+  "scheduleSecondWeek": [
+    {
+      "day": "Пн",
+      "pairs": [
+        {
+          "lecturer": {
+            "id": "8beb88837f3336460b62870d593f9e4a7f18f69da7aedf182e7aea52d06cf85d",
+            "name": "Крюков Владислав Ігорович"
+          },
+          "type": "Прак",
+          "time": "08:30:00",
+          "name": "Функціональні залежності та системи",
+          "location": {
+            "uri": "https://kpi.ua/k-7",
+            "title": "7-114"
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "621cb5d0bdea9584dc9f7ede1479e7cca67f8d9778d7e3c8c5cb8aa9eaef47ef",
+            "name": "Гавриленко Катерина Миколаївна"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Англійська мова професійного спрямування",
+          "location": {
+            "uri": "https://kpi.ua/k-11",
+            "title": "11-204"
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "99f814e8c1f5ba2d7fc79e815fae15835db85419e9f27e2389b0faf6112256b8",
+            "name": "Войцеховський Андрій Валерійович"
+          },
+          "type": "Лаб",
+          "time": "12:20:00",
+          "name": "Вступ до аналізу шкідливого програмного забезпечення",
+          "location": {
+            "uri": "https://kpi.ua/k-11",
+            "title": "11-312"
+          },
+          "tag": "lab",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "a4f3f94d22deec7a1e23e24d5593d8060a55eb55d81008a2feff9b0ca9955a89",
+            "name": "Яцура Павло Павлович"
+          },
+          "type": "Прак",
+          "time": "14:15:00",
+          "name": "Основи технологій захисту інформації",
+          "location": {
+            "uri": "https://kpi.ua/k-7",
+            "title": "7-116"
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "28722f23de9d9fa04b597ed17f8cd4a19a909a2a27cdc81b2d043f9a3a2ffd19",
+            "name": "Личик Владислав Васильович"
+          },
+          "type": "Лаб",
+          "time": "16:10:00",
+          "name": "Архітектура комп'ютерних систем",
+          "location": {
+            "uri": "https://kpi.ua/k-13",
+            "title": "13-37"
+          },
+          "tag": "lab",
+          "dates": []
+        }
+      ]
+    },
+    {
+      "day": "Вв",
+      "pairs": [
+        {
+          "lecturer": {
+            "id": "36c1cc2f9d7022bf6beacb6248a89e7e677b3bf9a91e6457a5ffdbade55b76da",
+            "name": "Гальчинський Леонід Юрійович"
+          },
+          "type": "Лек",
+          "time": "08:30:00",
+          "name": "Архітектура комп'ютерних систем",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "998c225a0b7bc4a581e8d523567f7e23f66cf7861d0c5ecdef8acb0c911ae880",
+            "name": "Шумська Алла Антонівна"
+          },
+          "type": "Лек",
+          "time": "10:25:00",
+          "name": "Функціональні залежності та системи",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "9cf1f1e60284e64e88b8371b70df7b686a71219ce68772b652cea677718110c6",
+            "name": "Демчінський Володимир Васильович"
+          },
+          "type": "Лек",
+          "time": "12:20:00",
+          "name": "Основи технологій захисту інформації",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "a1271642c26ded1a08fc67a7791aa368ec32e76940cf6f15e779d091f31439fb",
+            "name": "Коломицев Михайло Володимирович"
+          },
+          "type": "Лек",
+          "time": "14:15:00",
+          "name": "Бази даних та інформаційні системи",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        }
+      ]
+    },
+    {
+      "day": "Ср",
+      "pairs": [
+        {
+          "lecturer": {
+            "id": "fff6d685ea1aa528de7bd7f926cfec6a58583fc946e3ce71a6411f6cc09a7a96",
+            "name": "Казаков Мстислав Андрійович"
+          },
+          "type": "Прак",
+          "time": "08:30:00",
+          "name": "Logic",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "254b8075451cb29a64670c31e4c502d8b15ea3d6826e39e938de5f520474d61d",
+            "name": "Чайка Олександр Сергійович"
+          },
+          "type": "Прак",
+          "time": "08:30:00",
+          "name": "Основи звукозапису та цифрової обробки звуку",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "c7ce483fd1cc5fd498e7e2a09851c65f89a33a6837f66d9fbb36e5e5f70b41a2",
+            "name": "Гаврилова Наталія Євгенівна"
+          },
+          "type": "Прак",
+          "time": "08:30:00",
+          "name": "Складно-координаційні види спорту: спортивна секція з фітнес-міксу (шейпінгу, пілатесу, аеробіки, скіпінгу, стретчингу)",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "4cc3d9cba4633096fadf09ea1106b4b321ab81b1d461c3d6994f0e303f631249",
+            "name": "Голюк Вікторія Ярославівна"
+          },
+          "type": "Прак",
+          "time": "08:30:00",
+          "name": "Твої гроші: фінансові рішення у повсякденному житті",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "dd9b860b3c3156cc68dd9f889e8778cf5251c654c87534860ea372b2c980c127",
+            "name": "Хлебинська Олександра Ігорівна"
+          },
+          "type": "Прак",
+          "time": "08:30:00",
+          "name": "Управління командою: результат та ефективність",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "bffb5fb92a47fe78c6f42919f17fb950f38d824de5cc5565d9f2c24ed08cae2f",
+            "name": "Саламаха Олександр Євгенович"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Єдиноборства: спортивна секція з таеквон-до, карате, кікбоксингу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "ae705b6c2f40c6668a32a6169263128c213a269983ca0ee47630483fa1ad93b3",
+            "name": "Шишацька Валентина Іванівна"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Ігрові види спорту: спортивна секція з тенісу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "a898a8776c1b93c5718bf0d1c5f4e90fc60d7bc54c8699bc676cf9f60ce2aec9",
+            "name": "Чайковська Олена Юріївна"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Німецька мова (рівень А1)",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "a512db2741cd20693e4b16f19891e72b9ff12cead72761fc5e92d2aaf34740c1",
+            "name": "Башук Наталія Петрівна"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Німецька мова (рівень В1)",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "da3270018b712b8a4b1841f92c26ff067a088a391dc6031610e6300ee261df15",
+            "name": "Корюкаєв Микола Миколайович"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Спортивні секції (за видами спорту). Силові види спорту. Атлетизм – силовий тренінг",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "529faed5f67da7f6bbd6d69f20dfea73ec00d1dbe324dcc2ee4e9f197dcf0a61",
+            "name": "Цеслів Ольга Володимирівна"
+          },
+          "type": "Прак",
+          "time": "10:25:00",
+          "name": "Цифровий бізнес",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "5851509ad05f0a2b0bb2264315d5c084d056dc9bfff203a9eac68dac2793af4d",
+            "name": "Новікова Ірина Василівна"
+          },
+          "type": "Прак",
+          "time": "12:20:00",
+          "name": "Ігрові види спорту: спортивна секція з настільного тенісу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "fff6d685ea1aa528de7bd7f926cfec6a58583fc946e3ce71a6411f6cc09a7a96",
+            "name": "Казаков Мстислав Андрійович"
+          },
+          "type": "Прак",
+          "time": "12:20:00",
+          "name": "Етика штучного інтелекту",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "43a0298ed7863ce8f45f36c0d15d8d2fe84c7d1f2a21a87b51c36b3d18eb5622",
+            "name": "Ченуша Олександр Сергійович"
+          },
+          "type": "Прак",
+          "time": "12:20:00",
+          "name": "Управління брендом: від ідеї до ринку",
+          "location": null,
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "7688b6ef52555962d008fff894223582c484517cea7da49ee67800adc7fc8866",
+            "name": "Анікеєнко Лариса Василівна"
+          },
+          "type": "Прак",
+          "time": "14:15:00",
+          "name": "Ігрові види спорту: спортивна секція з волейболу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "8bba5b9b846fd63c473e4c284ebea467e0b1809a389dd8998c95cab8d0ce8699",
+            "name": "Сога Сергій Михайлович"
+          },
+          "type": "Прак",
+          "time": "14:15:00",
+          "name": "Складно-координаційні види спорту: спортивна секція з туризму і скелелазіння",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "e0f1d28eabdbaab649162f1275bfe00e50dbf549e200148aca0eb2f0178074db",
+            "name": "Назимок Віктор Васильович"
+          },
+          "type": "Прак",
+          "time": "16:10:00",
+          "name": "Єдиноборства: спортивна секція з боксу",
+          "location": {
+            "uri": "https://kpi.ua/k-24",
+            "title": "24-спорт. зал."
+          },
+          "tag": "prac",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "aedec0d0ca66f380aed5fa5634c513c1bdfedc50ff2d734104809ddbc8b82295",
+            "name": "Ільїн Микола Іванович"
+          },
+          "type": "Лек",
+          "time": "18:05:00",
+          "name": "Вступ до аналізу шкідливого програмного забезпечення",
+          "location": null,
+          "tag": "lec",
+          "dates": []
+        }
+      ]
+    },
+    {
+      "day": "Чт",
+      "pairs": []
+    },
+    {
+      "day": "Пт",
+      "pairs": [
+        {
+          "lecturer": {
+            "id": "28722f23de9d9fa04b597ed17f8cd4a19a909a2a27cdc81b2d043f9a3a2ffd19",
+            "name": "Личик Владислав Васильович"
+          },
+          "type": "Лаб",
+          "time": "08:30:00",
+          "name": "Бази даних та інформаційні системи",
+          "location": {
+            "uri": "https://kpi.ua/k-13",
+            "title": "13-37"
+          },
+          "tag": "lab",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "3a1e774a8ea4f3f402fb14450653c20d4643489b3bd77e8cc22690b879a41635",
+            "name": "Смирнов Сергій Анатолійович"
+          },
+          "type": "Лек",
+          "time": "12:20:00",
+          "name": "Моделі рефлексії у кібербезпеці",
+          "location": {
+            "uri": "https://kpi.ua/k-7",
+            "title": "7-107"
+          },
+          "tag": "lec",
+          "dates": []
+        },
+        {
+          "lecturer": {
+            "id": "01ec3d27560e00b678b8ea3afd7c9279919d3cf28eb4ec2bf640c8ecf7629ccc",
+            "name": "Рибак Олександр Владиславович"
+          },
+          "type": "Прак",
+          "time": "16:10:00",
+          "name": "Моделі рефлексії у кібербезпеці",
+          "location": {
+            "uri": "https://kpi.ua/k-11",
+            "title": "11-203"
+          },
+          "tag": "prac",
+          "dates": []
+        }
+      ]
+    },
+    {
+      "day": "Сб",
+      "pairs": []
+    }
+  ]
+}
